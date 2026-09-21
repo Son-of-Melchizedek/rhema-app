@@ -349,12 +349,16 @@ input,textarea,select{font:inherit;}
   html{background:#05050a;background-image:radial-gradient(1100px 720px at 50% 4%,#191527 0%,#0b0b14 52%,#05050a 100%);display:grid;place-items:center;}
   body{
     width:min(480px,calc(100vw - 32px));
-    height:min(calc(100dvh - 44px),920px);
+    height:var(--frame-h,min(calc(100dvh - 44px),920px));
     margin:auto;
     border-radius:34px;
     overflow:hidden;
     position:relative;
-    transform:translateZ(0);            /* binds fixed children to the frame */
+    /* translateZ also binds fixed children to the frame; scale() grows the whole
+       device on large screens. Both are applied by fitDeviceFrame() via --frame-k,
+       so a 1440p monitor gets a bigger phone instead of a tiny one in a void. */
+    transform:translateZ(0) scale(var(--frame-k,1));
+    transform-origin:center center;
     background:var(--bg);
     box-shadow:0 0 0 1px rgba(255,255,255,.07),
                0 0 0 10px #0d0d15,
@@ -7102,12 +7106,15 @@ function renderTourStep(){
         const el=document.querySelector(st.sel);
         if(el){
           const r=el.getBoundingClientRect();
-          /* fixed children bind to <body> (the device frame on desktop), so the
-             spotlight must be offset by the frame's origin — (0,0) on phones. */
+          /* fixed children bind to <body> (the device frame on desktop), and on a
+             scaled frame their px coordinates are in the frame's local space — so
+             subtract the frame origin, then undo the frame scale. Both are no-ops
+             on phones (origin 0,0 and scale 1). */
           const fr=document.body.getBoundingClientRect();
+          const k=frameScale();
           spot.style.display='block';
-          spot.style.left=(r.left-fr.left-4)+'px';spot.style.top=(r.top-fr.top-4)+'px';
-          spot.style.width=(r.width+8)+'px';spot.style.height=(r.height+8)+'px';
+          spot.style.left=((r.left-fr.left)/k-4)+'px';spot.style.top=((r.top-fr.top)/k-4)+'px';
+          spot.style.width=(r.width/k+8)+'px';spot.style.height=(r.height/k+8)+'px';
           return;
         }
       }
@@ -7131,8 +7138,33 @@ function renderTourStep(){
     document.getElementById('tour-next').focus();
   });
 }
+/* Desktop device frame sizing. The app is a phone UI at a fixed 480x920 design
+   size; on screens with room to spare the whole device is scaled up (never the
+   layout, so every phone-layout rule stays exactly as designed). Width is scaled
+   only as far as the window allows, and the scale is capped so it still reads as
+   a phone rather than a wall. Phones (<=699px) never enter this path. */
+const FRAME_W=480, FRAME_H=920, FRAME_K_MAX=1.6;
+function fitDeviceFrame(){
+  const root=document.documentElement;
+  if(!window.matchMedia||!window.matchMedia('(min-width:700px)').matches){
+    root.style.removeProperty('--frame-h');root.style.removeProperty('--frame-k');return;
+  }
+  const availH=window.innerHeight-48, availW=window.innerWidth-64;
+  const h=Math.min(FRAME_H,availH);
+  const k=availH>FRAME_H?Math.min(availH/FRAME_H,availW/FRAME_W,FRAME_K_MAX):1;
+  root.style.setProperty('--frame-h',h+'px');
+  root.style.setProperty('--frame-k',String(Math.max(0.5,Math.round(k*1000)/1000)));
+}
+function frameScale(){
+  const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--frame-k'));
+  return (v>0&&isFinite(v))?v:1;
+}
+
 function init(){
   loadS();
+  fitDeviceFrame();
+  window.addEventListener('resize',fitDeviceFrame);
+  window.addEventListener('orientationchange',fitDeviceFrame);
   // Provider self-repair must run before the first AI call: a mismatched key or an
   // unusably slow model turns every study mode into "Could not load this study mode".
   const _keyFixed=repairProviderKey(), _modelFixed=repairProviderModel();

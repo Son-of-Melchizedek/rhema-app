@@ -339,23 +339,35 @@ input,textarea,select{font:inherit;}
 .theme-name{font-size:11px;color:var(--text-2);letter-spacing:.3px;}
 .theme-swatch.active .theme-name{color:var(--gold);}
 
-/* ===== RESPONSIVE: comfortable column on desktop, full-bleed on phones ===== */
+/* ===== RESPONSIVE: phone-shaped device frame on desktop, full-bleed on phones =====
+   Desktop = the body IS the phone. Width/height are clamped to the window, and
+   because body carries a transform it becomes the containing block for every
+   position:fixed descendant (tabbar, chat bar, sheets, toast, overlays), so all
+   app chrome stays glued to the device frame instead of the browser window.
+   Phones (<=699px) hit none of this: body is the viewport, layout is untouched. */
 @media (min-width:700px){
-  body{background:var(--bg);}
-  #app{max-width:600px;box-shadow:0 0 60px rgba(0,0,0,.35);}
-  #tabbar{max-width:600px;}
-  .modal-sheet{max-width:600px;border-radius:20px;margin-bottom:0;}
-  .study-sheet{max-width:600px;height:86vh;}
-  #verse-actions{max-width:560px;}
-  .verse-text{font-size:21px;}
-  .chapter-content{padding:24px 28px 8px;}
-  .home-header,.plans-header,.notes-header,.settings-header{padding-left:28px;padding-right:28px;}
-}
-@media (min-width:1100px){
-  #app{max-width:680px;}
-  #tabbar{max-width:680px;}
-  .modal-sheet,.study-sheet{max-width:680px;}
-  #verse-actions{max-width:640px;}
+  html{background:#05050a;background-image:radial-gradient(1100px 720px at 50% 4%,#191527 0%,#0b0b14 52%,#05050a 100%);display:grid;place-items:center;}
+  body{
+    width:min(480px,calc(100vw - 32px));
+    height:min(calc(100dvh - 44px),920px);
+    margin:auto;
+    border-radius:34px;
+    overflow:hidden;
+    position:relative;
+    transform:translateZ(0);            /* binds fixed children to the frame */
+    background:var(--bg);
+    box-shadow:0 0 0 1px rgba(255,255,255,.07),
+               0 0 0 10px #0d0d15,
+               0 0 0 11px rgba(255,255,255,.06),
+               0 28px 70px rgba(0,0,0,.7);
+  }
+  #app{width:100%;max-width:none;height:100%;box-shadow:none;}
+  #tabbar,.chat-quick-chips,#chat-input-area{max-width:100%;}
+  .modal-sheet{max-width:100%!important;max-height:82%!important;border-radius:20px 20px 0 0;margin-bottom:0;}
+  .study-sheet{max-width:100%;height:82%;}
+  .tour-sheet{max-width:100%;}
+  .verse-picker-sheet{max-height:60%;}
+  #verse-actions{max-width:calc(100% - 32px);}
 }
 .version-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:54px;padding:12px 14px;margin-bottom:6px;border-radius:12px;background:var(--elev);border:1px solid var(--border);cursor:pointer;transition:border-color .15s;}
 .version-row:active{background:var(--gold-dim);}
@@ -508,11 +520,11 @@ input,textarea,select{font:inherit;}
 .cmp-col-head{font-family:'Cinzel',serif;font-size:9px;letter-spacing:1.5px;color:var(--text-3);margin-bottom:4px;border-bottom:1px dashed var(--border);padding-bottom:3px;}
 .cmp-col-text{font-family:'EB Garamond',serif;font-size:15px;line-height:1.65;color:var(--text-1);}
 .cmp-empty{font-size:12px;color:var(--text-3);padding:14px 4px;font-style:italic;}
-/* Wide screens: true side-by-side columns (phone keeps readable stacked blocks) */
-@media (min-width:900px){
-  .cmp-row{grid-template-columns:32px repeat(var(--cmp-cols,2),1fr);}
-  .cmp-num{padding-top:4px;}
-}
+/* Compare mode always uses stacked labeled blocks: the app's content width is
+   capped at 480px by the phone frame (see the RESPONSIVE block above), so the old
+   viewport-based "true columns >=900px" rule is unreachable and only ever produced
+   unreadably narrow columns. Kept as a comment so it isn't reintroduced. */
+.cmp-num{padding-top:4px;}
 /* ═══ GUIDED TOUR (v3) ═══ */
 #tour-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.55);display:none;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
 #tour-overlay.open{display:flex;opacity:1;pointer-events:all;}
@@ -7090,8 +7102,11 @@ function renderTourStep(){
         const el=document.querySelector(st.sel);
         if(el){
           const r=el.getBoundingClientRect();
+          /* fixed children bind to <body> (the device frame on desktop), so the
+             spotlight must be offset by the frame's origin — (0,0) on phones. */
+          const fr=document.body.getBoundingClientRect();
           spot.style.display='block';
-          spot.style.left=(r.left-4)+'px';spot.style.top=(r.top-4)+'px';
+          spot.style.left=(r.left-fr.left-4)+'px';spot.style.top=(r.top-fr.top-4)+'px';
           spot.style.width=(r.width+8)+'px';spot.style.height=(r.height+8)+'px';
           return;
         }

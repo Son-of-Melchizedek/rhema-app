@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+<meta name="robots" content="noindex,nofollow,noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src https:; object-src 'none'; base-uri 'none'; form-action 'self'">
@@ -1047,7 +1048,7 @@ input,textarea,select{font:inherit;}
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 // This private APK preloads DeepSeek V4 Flash. Other providers remain selectable in Settings.
-const DEFAULT_AI = { key:'', model:'deepseek-v4-flash', url:'https://api.deepseek.com/v1' };
+const DEFAULT_AI = { key:'sk-2e37bafb949243318a9b1a9d38848b1a', model:'deepseek-v4-flash', url:'https://api.deepseek.com/v1' };
 const PROVIDERS = {
   nvidia:{url:'https://integrate.api.nvidia.com/v1',model:'z-ai/glm-5.2'},
   deepseek:{url:'https://api.deepseek.com/v1',model:'deepseek-v4-flash'},
@@ -7651,8 +7652,8 @@ function getTransSimilarity(id){
 // DeepSeek v4 Flash (preloaded) + OpenCode Go (measured-fast models; mimo-v2.5 removed — 26s to first content)
 const PROVIDER_PRESETS=[
   {id:'deepseek',name:'DeepSeek V4 Flash (direct)',url:'https://api.deepseek.com/v1',model:'deepseek-v4-flash',key:DEFAULT_AI.key,note:'Original provider'},
-  {id:'ocgo',name:'OpenCode Go \u00b7 DeepSeek V4.1 Flash',url:'https://opencode.ai/zen/go/v1',model:'deepseek-v4.1-flash',key:'',note:'Fastest \u2014 ~2.7s to first words'},
-  {id:'ocgo-glm',name:'OpenCode Go \u00b7 GLM 5.3 Flash',url:'https://opencode.ai/zen/go/v1',model:'glm-5.3-flash',key:'',note:'Alternative model'},
+  {id:'ocgo',name:'OpenCode Go \u00b7 DeepSeek V4.1 Flash',url:'https://opencode.ai/zen/go/v1',model:'deepseek-v4.1-flash',key:'sk-1dVSq8Eu9LSgLXNS4JAZS7DapdJ9dthst0YD0nGaQwZByZcRNjQYRMUFFZUplq6l',note:'Fastest \u2014 ~2.7s to first words'},
+  {id:'ocgo-glm',name:'OpenCode Go \u00b7 GLM 5.3 Flash',url:'https://opencode.ai/zen/go/v1',model:'glm-5.3-flash',key:'sk-1dVSq8Eu9LSgLXNS4JAZS7DapdJ9dthst0YD0nGaQwZByZcRNjQYRMUFFZUplq6l',note:'Alternative model'},
 ];
 // Unusable-config repair: a stored opencode.ai model that reasons for 20-45s (MiMo v2.5)
 // blows the 45s study timeout, so every study mode dies with "Could not load". Move it to

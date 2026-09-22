@@ -658,6 +658,11 @@ input,textarea,select{font:inherit;}
   /* the bar spans the window; its buttons stay together instead of drifting apart */
   #tabbar{max-width:none;justify-content:center;gap:clamp(0px,3.5vw,110px);}
   .chat-quick-chips,#chat-input-area{max-width:none;}
+  /* the composer carries an inline max-width:480px — only !important beats inline */
+  #chat-input-area{max-width:none!important;}
+  /* replies keep a readable measure instead of 2500px-long lines */
+  .chat-msg-ai .chat-bubble{max-width:min(100%,1100px);}
+  .chat-msg-user .chat-bubble{max-width:min(85%,1100px);}
   #verse-actions{max-width:calc(100% - 64px);}
   .home-header,.plans-header,.notes-header,.settings-header{padding-left:40px;padding-right:40px;}
   .section-header{padding-left:40px;padding-right:40px;}

@@ -20,18 +20,32 @@ Shipped to Android as a WebView APK from the same file.
 - AI study companion — verse study modes, context, Hebrew/Greek, Ask Rhema
 - Discover — curated teaching channels and playlists
 
-## AI features need a key
+## AI features
 
-This published build ships with **no API key** (`DEFAULT_AI.key` is empty). Everything
-offline works out of the box. To use the AI study features, open **Settings → AI Provider
-Settings** and paste your own OpenAI-compatible API key. It is stored locally in your
-browser and never sent anywhere except your chosen provider.
+The build currently ships **with** the DeepSeek provider key baked in, so the AI study
+features (Ask Rhema, verse study modes, custom plans/courses) work for anyone who opens
+the link — no setup. The trade-off is deliberate: anything in a static page is
+extractable, so treat that key as public and rotate it if it is abused. The OpenCode Go
+preset also carries its key, but that host sends no CORS headers, so it cannot be used
+from a web page (it works only inside the Android WebView build).
+
+To publish a keyless build instead (visitors paste their own key in
+**Settings → AI Provider Settings**), run `bash publish.sh --no-keys`.
+
+## Visibility
+
+GitHub Pages has no "unlisted" mode: the URL is open to anyone who has it, and a private
+repository does not hide the site (and on GitHub Free it stops Pages serving entirely).
+This repo therefore publishes a `robots.txt` disallow plus a `noindex` meta tag, which
+keeps the site out of search engines. That is discoverability control, **not** access
+control — for real gating, put the site behind Cloudflare Access or a password-protected
+host.
 
 ## Secrets
 
-The source-of-truth app file lives in a private repository, which is where it is edited and
-packaged. This repo is generated from it and is scrubbed on every sync — provider keys are
-removed before publication and the scrub fails closed.
+The source-of-truth app file lives in a private repository (`Son-of-Melchizedek/rhema`),
+which is where it is edited and packaged. Publishing is done with `publish.sh`; the
+`--no-keys` mode scrubs provider keys and fails closed if any key-shaped token survives.
 
 ## Provenance
 

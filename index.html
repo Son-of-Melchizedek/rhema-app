@@ -38,9 +38,17 @@ button:active{filter:brightness(1.15);}
 input,textarea,select{touch-action:manipulation;}
 input,textarea,select{font:inherit;}
 #app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative;overflow:hidden;}
-.screen{flex:1;overflow-y:auto;overflow-x:hidden;display:none;padding-bottom:80px;}#screen-chat.screen{padding-bottom:140px;}
+:root{--tabbar-h:70px;--safe-b:env(safe-area-inset-bottom,0px);}
+/* Every screen must clear the fixed tab bar by its REAL height plus the
+   home-indicator inset. Previously only #screen-chat had this, inside a
+   min-width:700px query, so on a phone the Verse of the Day card sat
+   under the bar. One rule, one source of truth, applies to all screens. */
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;display:none;
+  padding-bottom:calc(var(--tabbar-h) + var(--safe-b) + 28px);}
 .screen.active{display:block;}
-#tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:70px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;padding:0 8px;box-shadow:0 -2px 20px var(--shadow);}
+#tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  height:calc(var(--tabbar-h) + var(--safe-b));padding-bottom:var(--safe-b);box-sizing:content-box;
+  background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;box-shadow:0 -2px 20px var(--shadow);}
 .tab-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 18px;min-height:54px;border-radius:16px;color:var(--text-3);transition:background .15s,color .15s;}
 .tab-btn:active{background:var(--gold-dim);color:var(--gold);}
 .tab-btn.active{color:var(--gold);background:var(--accent-bg);}
@@ -148,7 +156,10 @@ input,textarea,select{font:inherit;}
 .action-chip{display:flex;align-items:center;gap:6px;padding:11px 16px;min-height:44px;border-radius:22px;font-size:13px;cursor:pointer;border:1px solid var(--border);color:var(--text-2);background:var(--elev);white-space:nowrap;transition:all .15s;}
 .action-chip:active{background:var(--gold-dim);color:var(--gold);}
 .action-chip:hover{border-color:var(--gold);color:var(--gold);}
-.action-chip.primary{background:var(--gold-dim);border-color:var(--border-med);color:var(--gold);}
+.action-chip.primary{background:var(--gold);border-color:var(--gold);color:#17182a;
+  font-weight:600;box-shadow:0 2px 10px rgba(200,168,75,.22);}
+.action-chip.primary:active{background:var(--gold-dim);color:var(--gold);box-shadow:none;}
+.action-chip.primary:hover{background:#e0b95c;color:#17182a;}
 .highlight-chips{display:flex;gap:12px;margin-top:12px;}
 .hl-dot{width:44px;height:44px;border:none;padding:0;border-radius:50%;cursor:pointer;transition:transform .12s;}
 .hl-dot:active{transform:scale(.9);}
@@ -342,8 +353,7 @@ input,textarea,select{font:inherit;}
 /* CHAT */
 .chat-quick-chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:fixed;bottom:142px;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-top:1px solid var(--border);z-index:49;}
 .chat-quick-chips::-webkit-scrollbar{display:none;}
-#screen-chat.screen{padding-bottom:218px;}
-.chat-chip{flex-shrink:0;padding:10px 16px;min-height:44px;display:flex;align-items:center;background:var(--elev);border:1px solid var(--border);border-radius:21px;font-size:13px;color:var(--text-2);letter-spacing:0.3px;white-space:nowrap;}
+#screen-chat .chat-chip{flex-shrink:0;padding:10px 16px;min-height:44px;display:flex;align-items:center;background:var(--elev);border:1px solid var(--border);border-radius:21px;font-size:13px;color:var(--text-2);letter-spacing:0.3px;white-space:nowrap;}
 .chat-chip:active{background:var(--gold-dim);color:var(--gold);}
 .chat-chip:active{background:var(--gold-dim);color:var(--gold);}
 .chat-msg{margin-bottom:16px;}
@@ -911,7 +921,7 @@ img{ -webkit-user-drag:none; }
   .chat-quick-chips{flex-wrap:wrap;overflow:visible;justify-content:center;max-width:760px!important;}
   /* the composer carries an inline max-width:480px — only !important beats inline */
   #chat-input-area{max-width:760px!important;}
-  #screen-chat.screen{padding-bottom:268px;}
+  
   .chat-msg-ai .chat-bubble{max-width:100%;padding:18px 22px;}
   .chat-msg-user .chat-bubble{max-width:min(85%,560px);}
   #verse-actions{max-width:calc(100% - 64px);}

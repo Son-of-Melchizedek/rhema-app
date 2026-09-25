@@ -414,8 +414,7 @@ input,textarea,select{font:inherit;}
 .action-chip:active{transform:scale(.97);}
 .momentum-card:active{transform:scale(.985);}
 .vid-card:active{transform:scale(.97);}
-#toast{transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .22s ease;}
-#toast.show{transform:translateX(-50%) translateY(0);}
+
 @media (prefers-reduced-motion:no-preference){
   .stagger-item{opacity:0;transform:translateY(8px);animation:staggerUp .45s ease forwards;animation-delay:var(--d,0ms);}
   @keyframes staggerUp{to{opacity:1;transform:none;}}
@@ -777,7 +776,12 @@ img{ -webkit-user-drag:none; }
   from{opacity:0;transform:translate3d(0,16px,0) scale(.96);}
   to{opacity:1;transform:none;}
 }
-#toast{animation:toastIn 380ms var(--spring-bouncy) both;}
+/* The entrance animation must be scoped to `.show` and must NOT persist.
+   On the base selector with fill-mode `both`, its final keyframe
+   (opacity:1; transform:none) was retained forever after load, which erased
+   the translateX(-50%) centering and left this empty toast permanently
+   visible as a small pill above the tab bar on EVERY screen. */
+#toast.show{animation:toastIn 380ms var(--spring-bouncy);}
 
 /* Skeleton shimmer: sweep with a spring-eased mask position. */
 @keyframes shimmerSweep{from{background-position:-180% 0;}to{background-position:180% 0;}}
@@ -4956,7 +4960,17 @@ function renderMomentum(){
 }
 // ── TOAST ────────────────────────────────────────────────────────
 let _tt;
-function toast(msg,d=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),d);}
+function toast(msg,d=2500){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  // An empty toast must never be painted: a blank pill above the tab bar is
+  // indistinguishable from a broken UI element to the user.
+  if(!msg||!String(msg).trim()){t.classList.remove('show');t.textContent='';return;}
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(_tt);
+  _tt=setTimeout(()=>{t.classList.remove('show');t.textContent='';},d);
+}
 // ── XP & STREAK ──────────────────────────────────────────────────
 function addXP(n){
   S.xp+=n;

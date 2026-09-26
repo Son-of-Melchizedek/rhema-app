@@ -38,6 +38,29 @@ PY
 
 printf 'User-agent: *\nDisallow: /\n' > "$REPO/robots.txt"
 echo "wrote robots.txt (Disallow: /)"
-echo
-echo "next:"
-echo "  git -C \"$REPO\" add -A && git -C \"$REPO\" commit -m '...' && git -C \"$REPO\" push"
+# Publish for real. Previously this script only staged the file and printed a
+# "next:" hint, so a commit without a push looked like a successful deploy while
+# the live site kept serving the previous build. That is how a fix sat verified
+# locally and missing in production.
+cd "$REPO"
+if git diff --quiet --cached && git diff --quiet; then
+  echo "no changes to publish"
+else
+  git add -A
+  git commit -q -m "${RHEMA_MSG:-Rhema app update}" || echo "(nothing to commit)"
+fi
+git push -q origin HEAD && echo "pushed: $(git log --oneline -1)"
+
+# Prove the deploy actually happened rather than trusting the push.
+REMOTE_SHA=$(git rev-parse HEAD)
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  sleep 6
+  LIVE_SHA=$(curl -s "${RHEMA_URL:-https://son-of-melchizedek.github.io/rhema-app/}" | sha256sum | cut -d' ' -f1)
+  SRC_SHA=$(sha256sum index.html | cut -d' ' -f1)
+  if [[ "$LIVE_SHA" == "$SRC_SHA" ]]; then
+    echo "verified live matches published build (${SRC_SHA:0:16})"
+    exit 0
+  fi
+done
+echo "WARNING: live site does not match the build yet (want ${SRC_SHA:0:16}, got ${LIVE_SHA:0:16})"
+exit 1

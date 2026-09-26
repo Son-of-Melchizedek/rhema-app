@@ -6241,11 +6241,19 @@ Include all ${days} days. Do NOT skip any. Use real scripture references.`);
       const d=entry&&typeof entry==='object'?entry:{};
       return {day:i+1,ref:planText(d.ref,120)||'Psalm 119:105',title:planText(d.title,120)||'Continue the journey',focus:planText(d.focus,300),keyVerse:planText(d.keyVerse,500),commentary:planText(d.commentary,1000),prayer:planText(d.prayer,600)};
     });
-    plan.days=await Promise.all(normalized.map(async day=>{
+    // DEFECT-PLAN-001: this used to throw on the first unresolvable reference,
+    // so one bad ref out of seven destroyed the whole plan the user waited for.
+    // Now each day is repaired on its own: a verified ref is canonicalised, an
+    // unresolvable one is marked and the day is rewritten later, never lost.
+    // Matches the Study panel's per-section resilience.
+    let repaired=0;
+    plan.days=await Promise.all(normalized.map(async(day,di)=>{
       const verified=await validatePlanReference(day.ref);
-      if(!verified)throw new Error('Invalid Bible reference in generated plan');
-      return {...day,ref:canonicalPlanReference(verified)};
+      if(verified)return {...day,ref:canonicalPlanReference(verified)};
+      repaired++;
+      return {...day,refIssue:true,refMissing:true};
     }));
+    if(repaired)console.warn('[Rhema] plan: '+repaired+' day(s) arrived with an unresolvable reference');
     plan.title=planText(plan.title,140)||'Bible Reading Plan';
     plan.description=planText(plan.description,320);
     plan.completedDays=[];plan.id=Date.now().toString();plan.createdAt=Date.now();
@@ -6293,8 +6301,34 @@ function viewPlan(idx){
   dv.style.display='block';
   let h=`<button type="button" class="plan-day-back" onclick="closePlanView()">← Back to Discover</button>
     <div style="padding:0 20px 16px;"><div style="font-family:'Cinzel',serif;font-size:18px;color:var(--text-1);margin-bottom:4px;">${sTxt(plan.title)}</div><div style="font-size:13px;color:var(--text-2);">${sTxt(plan.description)}</div></div>`;
+  const doneCount=(plan.completedDays||[]).length;
+  const totalDays=plan.days.length;
+  const pct=totalDays?Math.round(doneCount/totalDays*100):0;
+  h+=`<div style="padding:0 20px 18px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <span style="font-size:12px;color:var(--text-2);">${doneCount} of ${totalDays} days complete</span>
+      <span style="font-size:12px;color:var(--gold);font-weight:600;">${pct}%</span>
+    </div>
+    <div style="height:4px;background:var(--elev-2,var(--elev));border-radius:2px;overflow:hidden;">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--covenant));border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1);"></div>
+    </div>
+  </div>`;
   plan.days.forEach((day,i)=>{
     const done=(plan.completedDays||[]).includes(i);
+    // DEFECT-PLAN-001: a day whose reference did not resolve shows as broken with
+    // a repair action, instead of opening to an error toast and losing the plan.
+    if(day.refIssue){
+      h+=`<div class="plan-day-card plan-day-broken" style="border-color:var(--warfare);">
+        <span class="plan-day-num" style="color:var(--warfare);">DAY ${day.day}</span>
+        <div class="plan-day-ref">${sTxt(day.title||'Day '+(i+1))}</div>
+        <div class="plan-day-focus" style="color:var(--text-2);">This day's Scripture reference could not be verified. The rest of your plan is safe.</div>
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <button type="button" onclick="event.stopPropagation();regenPlanDay(${idx},${i})" style="font-size:12px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:6px 12px;background:transparent;">↻ Find a new reference</button>
+          <button type="button" onclick="event.stopPropagation();skipPlanDay(${idx},${i})" style="font-size:12px;color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;background:transparent;">Skip this day</button>
+        </div>
+      </div>`;
+      return;
+    }
     h+=`<div class="plan-day-card${done?' done':''}" role="button" tabindex="0" onclick="openPlanDay(${idx},${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPlanDay(${idx},${i})}"><span class="plan-day-num" style="color:${PLAN_COLORS[i%PLAN_COLORS.length]};">DAY ${day.day}</span>
       <div class="plan-day-ref">${sTxt(day.ref)} — ${sTxt(day.title)}</div>
       ${day.focus?`<div class="plan-day-focus">${sTxt(day.focus)}</div>`:''}
@@ -6311,6 +6345,46 @@ function viewPlan(idx){
   dv.innerHTML=h;
 }
 function closePlanView(){S.planView=null;renderPlans();}
+// DEFECT-PLAN-001 support: repair a single broken day without losing the plan.
+// Previously an unresolvable reference threw during generation and destroyed the
+// entire plan. Now the day is isolated and can be regenerated or skipped.
+async function regenPlanDay(planIdx,dayIdx){
+  const plan=S.plans[planIdx],day=plan?.days?.[dayIdx];
+  if(!day)return;
+  const plan2=(plan.title||'this plan').slice(0,80);
+  day._regen=true;viewPlan(planIdx);
+  try{
+    const res=await callJSON([{role:'user',content:`Reading plan "${plan2}", day ${dayIdx+1}. The previous reference could not be verified.`}],
+      `You are a Bible study guide. Pick ONE real Bible reference for day ${dayIdx+1} of a ${plan.days.length}-day reading plan on "${plan2}".
+Return JSON: {"ref":"Book Chapter:Verse","title":"Short title","focus":"One sentence focus","keyVerse":"The key verse text"}
+Use a real, existing passage. Do not invent references.`);
+    if(!res||typeof res!=='object'||!res.ref)throw new Error('Bad response');
+    const verified=await validatePlanReference(res.ref);
+    if(!verified)throw new Error('still invalid');
+    day.ref=canonicalPlanReference(verified);
+    day.refIssue=false;day.refMissing=false;
+    day.title=boundedText(res.title,120)||day.title;
+    day.focus=boundedText(res.focus,300)||day.focus;
+    day.keyVerse=boundedText(res.keyVerse,500)||day.keyVerse;
+    store('cx_plans',S.plans);
+    toast('\u2728 Day '+day.day+' repaired');
+  }catch(e){
+    toast(/API key/i.test(e&&e.message||'')?'Add an API key in Settings first.':'Could not find a valid reference. Try again, or skip the day.');
+  }finally{
+    day._regen=false;viewPlan(planIdx);
+  }
+}
+function skipPlanDay(planIdx,dayIdx){
+  const plan=S.plans[planIdx],day=plan?.days?.[dayIdx];
+  if(!day)return;
+  plan.days.splice(dayIdx,1);
+  plan.days.forEach((d,i)=>{d.day=i+1;});
+  const cd=plan.completedDays||[];
+  plan.completedDays=cd.filter(x=>x<dayIdx);
+  store('cx_plans',S.plans);
+  viewPlan(planIdx);renderPlans();renderHomePlans();
+  toast('Day skipped \u2014 the rest of the plan is untouched');
+}
 async function openPlanDay(planIdx,dayIdx){
   const plan=S.plans[planIdx],day=plan?.days?.[dayIdx];if(!plan||!day)return;
   const verified=await validatePlanReference(day.ref);

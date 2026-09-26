@@ -7747,7 +7747,12 @@ const Motion=(()=>{
 })();
 
 function scrollerWithin(t,sheet){
-  let n=t&&t.closest?t.closest('.modal-sheet,.study-body,.verse-picker-grid,.verse-picker-sheet,.goal-setup,[data-sheet-scroll]'):null;
+  let n=t&&t.closest?t.closest('.modal-sheet,.study-body,.verse-picker-grid,.verse-picker-sheet,.goal-setup,#topic-sheet .topic-panel,#topic-sheet .topic-sheet-list,[data-sheet-scroll]'):null;
+  // The topic sheet is the one panel that outgrew the viewport: topics went from
+  // 15 verses to 25, so .topic-panel now needs its own scroll. It was missing
+  // from this list, so a drag on a verse row matched nothing here, the explicit
+  // scroll path never engaged, and the gesture was swallowed by drag-to-dismiss
+  // -- the sheet looked scrollable and was not.
   // Walk up INCLUDING the sheet itself. The settings sheet is its own scroll
   // container (overflow-y:auto on .modal-sheet), and excluding it returned null
   // for every gesture there, so content scrolling never engaged and the sheet

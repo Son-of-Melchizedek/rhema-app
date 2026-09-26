@@ -337,9 +337,9 @@ input,textarea,select{font:inherit;}
 .plan-day-card.done{opacity:.8;}
 .plan-day-num{font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--text-3);margin-bottom:4px;}
 .plan-day-ref{font-size:14px;color:var(--text-1);}
-.plan-day-focus{font-size:12px;color:var(--text-3);margin-top:4px;line-height:1.5;}
+.plan-day-focus{font-family:'EB Garamond',serif;font-size:14.5px;color:var(--text-2);margin-top:4px;line-height:1.6;}
 .plan-day-keyverse{font-size:13px;color:var(--text-2);margin-top:6px;padding:8px 10px;background:var(--bg);border-radius:8px;border-left:2px solid var(--gold);line-height:1.5;font-style:italic;}
-.plan-day-comm{font-size:13px;color:var(--text-2);margin-top:8px;line-height:1.6;padding:10px 12px;background:var(--accent-bg);border-radius:10px;border-left:2px solid var(--bread);}
+.plan-day-comm{font-family:'EB Garamond',serif;font-size:15.5px;color:var(--text-2);margin-top:8px;line-height:1.7;padding:10px 12px;background:var(--accent-bg);border-radius:10px;border-left:2px solid var(--bread);}
 .plan-day-prayer{font-size:13px;color:var(--text-2);margin-top:6px;line-height:1.5;padding:8px 10px;background:var(--elev);border-radius:8px;border-left:2px solid var(--covenant);font-style:italic;}
 /* MISC */
 .spinner{width:16px;height:16px;border:2px solid var(--border-med);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
@@ -578,12 +578,12 @@ input,textarea,select{font:inherit;}
 /* COURSE DAY VIEW */
 .course-day-view{display:none;}
 .course-day-view.open{display:block;}
-.course-day-back{margin:16px 20px 0;background:none;border:none;color:var(--gold);font-size:14px;padding:8px 4px;cursor:pointer;display:block;}
+.course-day-back{margin:8px 12px 0;background:none;border:1px solid var(--border);border-radius:10px;color:var(--gold);font-size:14px;padding:11px 14px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;}
 .course-day-card{padding:14px 18px;border-radius:12px;border:1px solid var(--border);background:var(--surface);margin-bottom:10px;}
 .course-day-card.done{border-color:var(--covenant);opacity:.75;}
 .course-day-num{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1.5px;color:var(--gold);display:block;margin-bottom:4px;}
 .course-day-ref{font-size:14px;color:var(--text-1);font-weight:600;}
-.course-day-teach{font-size:13.5px;color:var(--text-1);line-height:1.65;margin-top:10px;white-space:pre-line;}
+.course-day-teach{font-family:'EB Garamond',serif;font-size:16.5px;color:var(--text-1);line-height:1.75;margin-top:10px;white-space:pre-line;}
 .course-day-app{font-size:13px;color:var(--text-2);line-height:1.6;margin-top:10px;border-left:2px solid var(--gold-dim);padding-left:10px;}
 .course-day-verse{font-size:13px;font-style:italic;color:var(--covenant);line-height:1.6;margin-top:10px;}
 .course-day-analogy{margin-top:10px;padding:10px 14px;border:1px dashed var(--border-med);border-radius:10px;font-size:13px;color:var(--text-2);line-height:1.6;}
@@ -1143,6 +1143,8 @@ img{ -webkit-user-drag:none; }
     <div class="plan-gen-row">
       <input type="number" class="plan-gen-days" id="plan-days" aria-label="Number of days" value="7" min="3" max="7" placeholder="Days">
       <button class="plan-gen-submit" id="gen-btn" onclick="generatePlan()">GENERATE PLAN →</button>
+    <div id="plan-gen-skeleton" aria-hidden="true" style="display:none;margin-top:12px;"></div>
+    <div id="plan-gen-error" role="status" aria-live="polite" style="display:none;margin-top:12px;padding:12px 14px;border:1px solid var(--warfare);border-radius:12px;background:var(--elev);"></div>
     </div>
   </div>
   <div id="plan-day-view" style="display:none;"></div>
@@ -1603,7 +1605,29 @@ function normalizeProviderURL(value,fallback){
 function providerOrigin(value){try{return new URL(value).origin;}catch(e){return '';}}
 // ── STORAGE ──────────────────────────────────────────────────────
 const _mem={},_session={};
-function store(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){_mem[k]=v;}}
+// DEFECT-STORE-001: a QuotaExceededError used to be swallowed into an in-memory
+// fallback, so a course or plan that looked saved was gone on next launch with
+// no warning. Now the failure is surfaced once and the key is trimmed, because
+// losing a multi-week course silently is worse than losing old cache.
+let _quotaWarned=false;
+function store(k,v){
+  let raw;
+  try{raw=JSON.stringify(v);}
+  catch(e){_mem[k]=v;return false;}
+  try{localStorage.setItem(k,raw);return true;}
+  catch(e){
+    _mem[k]=v;
+    if(!_quotaWarned){
+      _quotaWarned=true;
+      // Try to reclaim space from regenerable caches before giving up.
+      try{['studyCaches','chatHistory','cx_highlights_cache'].forEach(kk=>{try{localStorage.removeItem(kk);}catch(_){}});}catch(_){}
+      try{localStorage.setItem(k,raw);}catch(_){
+        setTimeout(()=>toast('\u26a0\ufe0f Storage full \u2014 this item may not survive a restart. Delete a course or plan to free space.'),600);
+      }
+    }
+    return false;
+  }
+}
 function load(k,d){try{const v=localStorage.getItem(k);return v!=null?JSON.parse(v):d;}catch(e){return _mem[k]!==undefined?_mem[k]:d;}}
 function storeSession(k,v){try{sessionStorage.setItem(k,JSON.stringify(v));}catch(e){_session[k]=v;}}
 function loadSession(k,d){try{const v=sessionStorage.getItem(k);return v!=null?JSON.parse(v):d;}catch(e){return _session[k]!==undefined?_session[k]:d;}}
@@ -5138,7 +5162,12 @@ function renderHomePlans(){
     const done=(p.completedDays||[]).length;
     const pct=p.days.length?Math.round(done/p.days.length*100):0;
     const c=colors[i%colors.length];
-    h+=`<button type="button" class="plan-card-home" onclick="viewPlan(${i})"><span class="plan-card-accent" style="background:${c};"></span><span class="plan-card-title">${sTxt(p.title)}</span><span class="plan-card-day">Day ${done+1} of ${p.days.length}</span><span class="plan-progress-track"><span class="plan-progress-fill" style="width:${pct}%;background:${c};"></span></span></button>`;
+    // DEFECT-PLAN-002: this said "Day ${done+1}", treating the completion COUNT as
+    // a position -- finishing day 3 first showed "Day 2 of 7". Use the real next
+    // unfinished day index instead.
+    let nextIdx=p.days.findIndex((d,di)=>!(p.completedDays||[]).includes(di));
+    const dayLabel=nextIdx===-1?'Complete \u2728':'Day '+(nextIdx+1)+' of '+p.days.length;
+    h+=`<button type="button" class="plan-card-home" onclick="viewPlan(${i})"><span class="plan-card-accent" style="background:${c};"></span><span class="plan-card-title">${sTxt(p.title)}</span><span class="plan-card-day">${dayLabel}</span><span class="plan-progress-track"><span class="plan-progress-fill" style="width:${pct}%;background:${c};"></span></span></button>`;
   });
   scroll.innerHTML=h;
   // plan progress sweeps in with the card, so the row reads as alive on load
@@ -5965,8 +5994,17 @@ function cleanReasoning(text){
   // If cleaning removed everything, return original
   return t.length > 20 ? t : text;
 }
-async function callJSON(msgs,sys){
-  let txt=await callAI(msgs,sys+' Return ONLY valid JSON. No markdown backticks, no explanation.',null);
+// DEFECT-AI-001: callJSON hardcoded the study path's defaults (1800 tokens, 30s)
+// and its repair step re-parsed without a guard, so a second bad response threw
+// a raw SyntaxError that every caller collapsed into a generic toast. Plans and
+// courses now pass their own budget, and the failure is classifiable.
+function sanitizeForPrompt(t){
+  return String(t==null?'':t).replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,300);
+}
+async function callJSON(msgs,sys,opts){
+  opts=opts||{};
+  const budget=opts.maxTokens||1800, tmo=opts.timeoutMs||30000;
+  let txt=await callAI(msgs,sys+' Return ONLY valid JSON. No markdown backticks, no explanation.',null,budget,null,null,tmo);
   txt=txt.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
   const aCandidates=[txt.indexOf('['),txt.indexOf('{')].filter(i=>i!==-1).sort((x,y)=>x-y);
   const a=aCandidates.length?aCandidates[0]:-1;
@@ -5975,8 +6013,9 @@ async function callJSON(msgs,sys){
   const b=txt.lastIndexOf(closer);
   if(a===-1||b===-1)throw new Error('No JSON in response');
   try{return JSON.parse(txt.slice(a,b+1));}catch(err){
-    const r=await callAI([{role:'user',content:'Fix and return only valid JSON: '+txt}],'Return only valid JSON, no other text.',null);
-    return JSON.parse(r.replace(/```json?\s*/gi,'').replace(/```\s*/g,'').trim());
+    const r=await callAI([{role:'user',content:'Fix and return only valid JSON: '+txt}],'Return only valid JSON, no other text.',null,budget,null,null,tmo);
+    try{return JSON.parse(r.replace(/```json?\s*/gi,'').replace(/```\s*/g,'').trim());}
+    catch(_){throw new Error('The AI returned malformed JSON twice. Please try again.');}
   }
 }
 // ── STUDY PROMPTS ────────────────────────────────────────────────
@@ -6221,18 +6260,31 @@ async function generatePlan(){
   const topic=document.getElementById('plan-topic').value.trim();
   const days=Math.min(7,Math.max(3,parseInt(document.getElementById('plan-days').value)||7));
   if(!topic){toast('Enter a theme or topic');return;}
-  if(S.plans.length>=MAX_PLANS){toast('Max 7 plans reached');return;}
+  if(S.plans.length>=MAX_PLANS){toast('Max '+MAX_PLANS+' plans reached — delete one to make room');return;}
+  const stE=document.getElementById('plan-gen-error');if(stE){stE.style.display='none';stE.innerHTML='';}
   planGen=true;const btn=document.getElementById('gen-btn');btn.textContent='GENERATING...';btn.disabled=true;
+  // DEFECT-PLAN-007: generation was a silent stall behind a disabled button --
+  // the model call plus a reference lookup per day can take many seconds. Show
+  // the shape of what is coming, using the Study panel's existing shimmer.
+  const skel=document.getElementById('plan-gen-skeleton');
+  if(skel){
+    let sh='';
+    for(let i2=0;i2<days;i2++)sh+='<div class="course-day-card" style="margin:0 0 10px;"><div class="study-skel-line" style="width:34%"></div><div class="study-skel-line" style="width:82%"></div><div class="study-skel-line" style="width:56%"></div></div>';
+    skel.innerHTML=sh+'<div class="study-skel-note" style="text-align:center;">Designing your '+days+'-day plan…</div>';
+    skel.style.display='block';
+  }
   try{
-    const plan=await callJSON([{role:'user',content:`Create a ${days}-day Bible reading plan on theme: "${topic}".`}],
-      `You are a Bible study guide creating a ${days}-day reading plan on "${topic}".
+    const plan=await callJSON([{role:'user',content:`Create a ${days}-day Bible reading plan on theme: "${sanitizeForPrompt(topic)}".`}],
+      `You are a Bible study guide creating a ${days}-day reading plan on "${sanitizeForPrompt(topic)}".
 Return a JSON object with exactly ${days} days in the days array. Use real Bible references. Balance OT and NT.
 Format: {"title":"Plan title","description":"Brief plan description","days":[
-  {"day":1,"ref":"Book Chapter:Verse-Verse","title":"Short title","focus":"One sentence focus","keyVerse":"The key verse text"},
+  {"day":1,"ref":"Book Chapter:Verse-Verse","title":"Short title","focus":"One sentence focus","keyVerse":"The key verse text","commentary":"2-4 sentences on what this passage actually says and how it advances the theme","prayer":"One short prayer tied to today's passage"},
   ...
 ]}
-Each day must have: day number, Bible reference (Book Chapter:Verses), short title, one-sentence focus, and the key verse text.
-Include all ${days} days. Do NOT skip any. Use real scripture references.`);
+Each day must have: day number, Bible reference (Book Chapter:Verses), short title, one-sentence focus, the key verse text, a 2-4 sentence commentary, and a short prayer.
+The commentary must explain what the passage says, not summarise the theme. The prayer must reference something concrete from that day.
+Include all ${days} days. Do NOT skip any. Use real scripture references.`,
+      {maxTokens:4096,timeoutMs:75000});
     if(!plan||typeof plan!=='object'||Array.isArray(plan)||!Array.isArray(plan.days))throw new Error('Invalid plan response');
     const planText=(value,max=280)=>String(value??'').trim().slice(0,max);
     const rawDays=plan.days.slice(0,days);
@@ -6258,16 +6310,29 @@ Include all ${days} days. Do NOT skip any. Use real scripture references.`);
     plan.description=planText(plan.description,320);
     plan.completedDays=[];plan.id=Date.now().toString();plan.createdAt=Date.now();
     S.plans.push(plan);store('cx_plans',S.plans);addXP(25);
+    const st0=document.getElementById('plan-gen-error');if(st0){st0.style.display='none';st0.innerHTML='';}
+    const sk0=document.getElementById('plan-gen-skeleton');if(sk0){sk0.style.display='none';sk0.innerHTML='';}
     toast('✨ Plan created! +25 XP');
     document.getElementById('plan-gen-panel').classList.remove('open');
     document.getElementById('plan-topic').value='';
     renderPlans();renderHomePlans();
   }catch(e){
     if(/API key/i.test(e&&e.message||'')){toast('Add an API key in Settings first.');openSettings(true);}
-    else if(/Invalid Bible reference/i.test(e&&e.message||''))toast('The AI returned an invalid Bible reference. Please generate again.');
-    else toast('Could not create plan. Check AI settings.');
+    // DEFECT-PLAN-006: every failure mode collapsed into one generic toast and
+    // the user had to retype the topic to try again. Keep the real message and
+    // show an inline retry in the panel, mirroring the Study panel.
+    else{
+      const msg=(e&&e.message)?e.message.slice(0,110):'Could not create plan.';
+      const st=document.getElementById('plan-gen-error');
+      if(st){
+        st.style.display='block';
+        st.innerHTML='<div style="font-size:13px;color:var(--warfare);margin-bottom:8px;">'+sTxt(msg)+'</div>'+
+          '<button type="button" onclick="generatePlan()" style="font-size:12px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:8px 14px;background:transparent;">↻ Try again</button>';
+      }
+      toast('Could not create plan');
+    }
   }
-  finally{planGen=false;btn.textContent='GENERATE PLAN →';btn.disabled=false;}
+  finally{planGen=false;btn.textContent='GENERATE PLAN →';btn.disabled=false;const skF=document.getElementById('plan-gen-skeleton');if(skF){skF.style.display='none';skF.innerHTML='';}}
 }
 function renderPlans(){
   const list=document.getElementById('plans-list');
@@ -6335,9 +6400,13 @@ function viewPlan(idx){
       ${day.keyVerse?`<div class="plan-day-keyverse">📖 ${sTxt(day.keyVerse).slice(0,160)}</div>`:''}
       ${day.commentary?`<div class="plan-day-comm">${sTxt(day.commentary).slice(0,250)}${day.commentary.length>250?'…':''}</div>`:''}
       ${day.prayer?`<div class="plan-day-prayer">🙏 ${sTxt(day.prayer).slice(0,180)}${day.prayer.length>180?'…':''}</div>`:''}
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px;">
         <span style="font-size:12px;color:var(--gold);">Tap to read →</span>
-        ${done?'<span style="font-size:12px;color:var(--covenant);font-weight:600;">✓ Completed</span>':''}
+        <span style="display:flex;align-items:center;gap:10px;">
+          ${done?`<span style="font-size:12px;color:var(--covenant);font-weight:600;">✓ Completed</span>
+          <button type="button" onclick="event.stopPropagation();togglePlanDay(${idx},${i})" style="font-size:11px;color:var(--text-3);border:1px solid var(--border);border-radius:8px;padding:5px 10px;background:transparent;">Undo</button>`
+          :`<button type="button" onclick="event.stopPropagation();togglePlanDay(${idx},${i})" style="font-size:11px;color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;background:transparent;">Mark complete</button>`}
+        </span>
       </div>
     </div>`;
   });
@@ -6385,17 +6454,38 @@ function skipPlanDay(planIdx,dayIdx){
   viewPlan(planIdx);renderPlans();renderHomePlans();
   toast('Day skipped \u2014 the rest of the plan is untouched');
 }
+// DEFECT-PLAN-003: completion is now an explicit, reversible action instead of a
+// side effect of tapping a day.
+function togglePlanDay(planIdx,dayIdx){
+  const plan=S.plans[planIdx],day=plan?.days?.[dayIdx];
+  if(!day||day.refIssue)return;
+  if(!plan.completedDays)plan.completedDays=[];
+  const at=plan.completedDays.indexOf(dayIdx);
+  if(at>-1){plan.completedDays.splice(at,1);toast('Day '+day.day+' marked incomplete');}
+  else{plan.completedDays.push(dayIdx);addXP(50);toast('\u2728 +50 XP \u2014 Day '+day.day+' complete!');}
+  store('cx_plans',S.plans);
+  viewPlan(planIdx);renderPlans();renderHomePlans();
+}
 async function openPlanDay(planIdx,dayIdx){
   const plan=S.plans[planIdx],day=plan?.days?.[dayIdx];if(!plan||!day)return;
   const verified=await validatePlanReference(day.ref);
   if(!verified){toast('This plan day has an invalid or unavailable Scripture reference');return;}
-  if(!plan.completedDays)plan.completedDays=[];
-  if(!plan.completedDays.includes(dayIdx)){plan.completedDays.push(dayIdx);store('cx_plans',S.plans);addXP(50);toast('✨ +50 XP — Day complete!');}
+  // DEFECT-PLAN-003: opening a day used to mark it complete immediately, before
+  // the chapter loaded, with no way back -- one mis-tap permanently finished a
+  // day and still paid XP. Completion is now an explicit, reversible action in
+  // the day card; opening only navigates.
   S.book=verified.idx;S.chapter=verified.ch;S.chapterData=null;saveS();closePlanView();go('read');
   const jumpVerse=verified.vs;
   loadChapter().then(()=>{if(jumpVerse)setTimeout(()=>{const el=document.getElementById('v'+jumpVerse);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.click();}},500);});
 }
-function deletePlan(idx){S.plans.splice(idx,1);store('cx_plans',S.plans);closePlanView();toast('Plan deleted');}
+// DEFECT-PLAN-004 / DEFECT-COURSE-004: both deletes ran immediately on a
+// multi-day plan or a multi-week course, with no confirmation and no undo.
+function deletePlan(idx){
+  const p=S.plans[idx];if(!p)return;
+  if(!confirm(`Delete "${p.title}"?\n\nThis removes ${p.days.length} days and cannot be undone.`))return;
+  S.plans.splice(idx,1);store('cx_plans',S.plans);closePlanView();renderPlans();renderHomePlans();
+  toast('Plan deleted');
+}
 // ── COURSES (v3.4) ────────────────────────────────────────────────
 const MAX_COURSES=3; // multi-week processes: never more than 3 at a time
 let courseDepth='standard';
@@ -6517,10 +6607,11 @@ async function buildCourse(verdicts,weakAreas,openSummary){
   try{
     const topic=courseQuiz.topic;
     status.textContent='Designing your course outline…';
-    const outline=await callJSON([{role:'user',content:`Topic: "${topic}". Quiz verdicts per question: [${verdicts.join(',')}]. Weak areas: ${weakAreas.join('; ')||'none'}. Open answers: ${openSummary.join(' | ')}`}],
+    const outline=await callJSON([{role:'user',content:`Topic: "${sanitizeForPrompt(topic)}". Quiz verdicts per question: [${verdicts.join(',')}]. Weak areas: ${sanitizeForPrompt(weakAreas.join('; '))||'none'}. Learner wrote: ${openSummary.map(a=>sanitizeForPrompt(a)).join(' | ')||'none'}`}],
       `You are a Bible teacher building a multi-week course on "${topic}" using the Bible as the main learning material.
 Return JSON: {"title":"Course title","description":"1-2 sentence description","totalModules":N,"modules":[{"title":"Module title","focus":"One-sentence focus","lessons":[{"title":"Lesson title","ref":"Book Chapter:Verse","focus":"One-sentence focus"}]}]}
-totalModules between ${lo} and ${hi} — pick by topic breadth (broad topics → more modules). Each module has 3-5 lessons. Each lesson MUST have a real Bible reference. Cover the topic progressively: foundations first, then depth, then application.`);
+totalModules between ${lo} and ${hi} — pick by topic breadth (broad topics → more modules). Each module has 3-5 lessons. Each lesson MUST have a real Bible reference. Cover the topic progressively: foundations first, then depth, then application.`,
+      {maxTokens:6000,timeoutMs:90000});
     if(!outline||typeof outline!=='object'||!Array.isArray(outline.modules))throw new Error('Bad outline');
     const totalMods=Math.min(hi,Math.max(lo,Math.min(8,parseInt(outline.totalModules)||lo)));
     const rawMods=outline.modules.slice(0,totalMods);
@@ -6543,8 +6634,9 @@ totalModules between ${lo} and ${hi} — pick by topic breadth (broad topics →
     toast('✨ Course skeleton created! +50 XP — open a day to generate its lesson',2600);
   }catch(e){
     if(/API key/i.test(e&&e.message||'')){toast('Add an API key in Settings first.');openSettings(true);}
-    else if(/Invalid Bible reference/i.test(e&&e.message||''))toast('The AI returned an invalid Bible reference. Please try again.');
-    else toast('Could not build the course. Check AI settings.');
+    // The real error is preserved instead of collapsing into one generic string:
+    // HTTP 400, a timeout and malformed JSON are different problems for the user.
+    else toast('Could not build the course — '+(e&&e.message?e.message.slice(0,90):'check AI settings'));
   }finally{
     courseGenBusy=false;
     if(btn){btn.disabled=false;btn.textContent='BEGIN QUIZ →';}
@@ -6707,7 +6799,7 @@ function openLesson(mi,li){
     l._filling=true;
     dv.innerHTML=`<button type="button" class="course-day-back" onclick="openModule(${mi})">← Module ${mi+1}</button>
     <div style="padding:0 20px 16px;"><span class="course-day-num">LESSON ${li+1} OF ${m.lessons.length} · ${sTxt(m.title)}</span><div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-1);margin:2px 0 2px;">${sTxt(l.title)}</div><div style="font-size:13px;color:var(--gold);">${sTxt(l.ref)}</div>${l.focus?`<div style="font-size:13px;color:var(--text-2);margin-top:6px;">${sTxt(l.focus)}</div>`:''}</div>
-    <div class="course-day-card"><div class="course-day-gen-status" style="font-size:13px;color:var(--text-3);padding:8px 0;">Opening your lesson…</div><div class="course-day-teach"></div><div class="course-day-gen-status course-day-gen-sub" style="font-size:12px;color:var(--text-3);margin-top:8px;">Writing your lesson — it streams in as it's generated…</div></div>`;
+    <div class="course-day-card"><div class="study-skel-line" style="width:92%"></div><div class="study-skel-line" style="width:86%"></div><div class="study-skel-line" style="width:78%"></div><div class="study-skel-line" style="width:64%"></div><div class="study-skel-note">Writing your lesson — it streams in as it's generated</div><div class="course-day-teach"></div></div>`;
     setTimeout(()=>dv.scrollIntoView({behavior:'smooth'}),80);
     lessonStreamEl=dv.querySelector('.course-day-teach');
     lessonStreamBuf='';lessonStreamSettled=false;
@@ -6751,10 +6843,26 @@ async function fillLesson(idx,mi,li){
     l.filled=true;delete l._filling;
     store('cx_courses',S.courses);
     if(courseViewIdx===idx)renderLesson(idx,mi,li);
-  }catch(e){
+  }catch(err){
     delete l._filling;
+    // DEFECT-COURSE-002: this catch was empty, so a failed extras call left the
+    // lesson silently stripped of its check quiz and application with no way to
+    // retry. Record the failure and surface it; keep filled=false so the
+    // existing lazy-fill gate can still repair it on the next open.
+    l._error='Could not finish writing this lesson. Tap to try again.';
+    if(!l.teaching)l.filled=false;
     if(courseViewIdx===idx)renderLesson(idx,mi,li);
   }
+}
+// DEFECT-COURSE-002 support: re-run just the failed part of a lesson.
+async function retryLesson(idx,mi,li){
+  const c=S.courses[idx];const l=c&&c.modules&&c.modules[mi]&&c.modules[mi].lessons[li];
+  if(!l)return;
+  delete l._error;
+  l.filled=false;
+  store('cx_courses',S.courses);
+  renderLesson(idx,mi,li);
+  await fillLesson(idx,mi,li);
 }
 function renderLesson(idx,mi,li){
   const c=S.courses[idx];if(!c||!c.modules)return;
@@ -6776,7 +6884,14 @@ function renderLesson(idx,mi,li){
     quizHtml+='</div>';
   }
   const quizLocked=l.quiz&&l.quiz.length&&!checked;
-  dv.innerHTML=`<button type="button" class="course-day-back" onclick="openModule(${mi})">← Module ${mi+1}</button>
+  // DEFECT-COURSE-002: a lesson whose extras call failed used to look complete
+  // while silently missing its picture, key verse, application and check quiz.
+  // Show the failure and a way out, exactly like the Study panel's Retry.
+  const errHtml=l._error?`<div class="course-day-card" style="border-color:var(--warfare);margin-bottom:10px;">
+    <div style="font-size:13px;color:var(--warfare);">${sTxt(l._error)}</div>
+    <button type="button" onclick="retryLesson(${idx},${mi},${li})" style="margin-top:10px;font-size:12px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:8px 14px;background:transparent;">↻ Write the rest</button>
+  </div>`:'';
+  dv.innerHTML=`${errHtml}<button type="button" class="course-day-back" onclick="openModule(${mi})">← Module ${mi+1}</button>
     <div style="padding:0 20px 16px;"><span class="course-day-num">LESSON ${li+1} OF ${m.lessons.length} · ${sTxt(m.title)}</span><div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-1);margin:2px 0 2px;">${sTxt(l.title)}</div><div style="font-size:13px;color:var(--gold);">${sTxt(l.ref)}</div>${l.focus?`<div style="font-size:13px;color:var(--text-2);margin-top:6px;">${sTxt(l.focus)}</div>`:''}</div>
     <div class="course-day-card"><div class="course-day-teach">${sTxt(l.teaching)}</div>${l.analogy?`<div class="course-day-analogy"><strong>🧠 Picture it:</strong> ${sTxt(l.analogy)}</div>`:''}${l.keyVerse?`<div class="course-day-verse">"${sTxt(l.keyVerse)}"</div>`:''}${l.application?`<div class="course-day-app"><strong>Apply:</strong> ${sTxt(l.application)}</div>`:''}
     ${quizHtml}
@@ -6806,12 +6921,21 @@ function completeLesson(mi,li){
   store('cx_courses',S.courses);
   openModule(mi);
 }
-function readLessonInBible(mi,li){
+// DEFECT-COURSE-003: this used parseRef() and then set S.book/S.chapter without
+// clearing S.chapterData, so goRead() took the "already have a chapter" branch
+// and the reader displayed the PREVIOUS chapter's text. It also trusted an
+// AI-authored reference with no validation. Now it matches the course-day path:
+// verify, invalidate the cache, persist, tear down the course view, then load.
+async function readLessonInBible(mi,li){
   const idx=courseViewIdx;
   const c=S.courses[idx];if(!c||!c.modules)return;
   const l=c.modules[mi]&&c.modules[mi].lessons[li];if(!l)return;
-  const ref=parseRef(l.ref);if(!ref)return;
-  S.book=ref.idx;S.chapter=ref.ch;go('read');
+  const verified=await validatePlanReference(l.ref);
+  if(!verified){toast('This lesson has an invalid or unavailable Scripture reference');return;}
+  S.book=verified.idx;S.chapter=verified.ch;S.chapterData=null;saveS();
+  closeCourseView();go('read');
+  const jumpVerse=verified.vs;
+  loadChapter().then(()=>{if(jumpVerse)setTimeout(()=>{const el=document.getElementById('v'+jumpVerse);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.click();}},500);});
 }
 // ── MODULE QUIZ (verdict-scored, gates next module) ────────────
 let moduleQuizQ=null,moduleQuizA=null,moduleQuizBusy=false;
@@ -6899,6 +7023,11 @@ function scoreModuleQuiz(mi){
     renderCourses();
   }else{
     toast(`You got ${good}/${moduleQuizQ.length} — need ${Math.ceil(moduleQuizQ.length/2)}. Review the module and try again.`);
+    // DEFECT-COURSE-001: the quiz was re-rendered with the previous answers still
+    // in moduleQuizA, so pickModuleQuizOpt() returned early on every tap and the
+    // retake screen was a row of dead buttons. A learner who failed twice could
+    // never pass and every later module stayed locked. Re-arm before redraw.
+    moduleQuizA={mc:moduleQuizQ.map(()=>null)};
     renderModuleQuiz(mi);
   }
 }
@@ -7013,6 +7142,9 @@ async function readCourseDayInBible(dayIdx){
   loadChapter().then(()=>{if(jumpVerse)setTimeout(()=>{const el=document.getElementById('v'+jumpVerse);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.click();}},500);});
 }
 function deleteCourse(idx){
+  const c0=S.courses[idx];if(!c0)return;
+  const mods=(c0.modules||[]).length;
+  if(!confirm(`Delete "${c0.title}"?\n\nThis removes ${mods} module${mods===1?'':'s'} of study and cannot be undone.`))return;
   S.courses.splice(idx,1);store('cx_courses',S.courses);
   closeCourseView();toast('Course deleted');
 }

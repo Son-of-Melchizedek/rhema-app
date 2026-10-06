@@ -113,11 +113,23 @@ async function testGzip(){
   if (typeof DecompressionStream !== "function"){
     return row("gzip","FAIL","DecompressionStream","Not available — the pack would have to ship uncompressed (3.1 MB instead of 0.93 MB).");
   }
+  /* Fixture provenance -- do not hand-edit the bytes:
+       python3 -c "import gzip,base64;print(base64.b64encode(gzip.compress(b'hello world',9,mtime=0)).decode())"
+       -> H4sIAAAAAAAC/8tIzcnJVyjPL8pJAQCFEUoNCwAAAA==
+     Assert EXACT equality against a verified round-trip. An earlier fixture had a bad
+     CRC, so Chromium errored the decompression stream ("Failed to fetch") and this check
+     FAILED ON EVERY DEVICE, reading as an unsupported feature. A probe fixture that
+     cannot pass is worse than no probe: it manufactures a false fallback. */
+  var EXPECT = "hello world";
+  var FIXTURE_B64 = "H4sIAAAAAAAC/8tIzcnJVyjPL8pJAQCFEUoNCwAAAA==";
   try {
-    var src = new Blob([new Uint8Array([31,139,8,0,0,0,0,0,0,3,43,73,45,46,225,2,0,30,151,86,164,5,0,0,0])]);
-    var out = await new Response(src.stream().pipeThrough(new DecompressionStream("gzip"))).text();
-    row("gzip", out.indexOf("hello") === 0 ? "PASS" : "FAIL", "DecompressionStream",
-        'Round-tripped a gzip blob: "' + out.trim() + '"');
+    var raw = atob(FIXTURE_B64);
+    var bytes = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    var out = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    row("gzip", out === EXPECT ? "PASS" : "FAIL", "DecompressionStream",
+        out === EXPECT ? 'Round-tripped a gzip blob: "' + EXPECT + '"'
+                       : 'Round-trip mismatch: got "' + out + '"');
   } catch (e) {
     row("gzip","FAIL","DecompressionStream","Present but failed: " + e.message);
   }

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rhema — offline capability probe</title>
+<style>
+  :root{--bg:#0e0c09;--elev:#1a1712;--bd:#332c22;--fg:#f2ece0;--dim:#a89b85;--ok:#4ea86b;--no:#c05a4a;--warn:#c9a227}
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px 14px 60px;background:var(--bg);color:var(--fg);
+       font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+  h1{font-size:17px;margin:0 0 2px;letter-spacing:.5px}
+  .sub{color:var(--dim);font-size:12.5px;margin-bottom:14px}
+  .facts{background:var(--elev);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12.5px}
+  .facts div{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
+  .facts span:first-child{color:var(--dim)}
+  .facts span:last-child{text-align:right;word-break:break-word}
+  button{width:100%;padding:15px;border:0;border-radius:11px;background:var(--warn);color:#1a1408;
+         font:600 16px/1 inherit;letter-spacing:.4px;margin-bottom:14px}
+  button:disabled{opacity:.5}
+  .row{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:9px;
+       background:var(--elev);border:1px solid var(--bd);margin-bottom:7px}
+  .tag{flex:0 0 52px;font:700 11px/1.8 ui-monospace,monospace;letter-spacing:.5px}
+  .ok{color:var(--ok)}.no{color:var(--no)}.warn{color:var(--warn)}.run{color:var(--dim)}
+  .body{flex:1;min-width:0;font-size:13px}
+  .body b{display:block;font-weight:600;margin-bottom:1px}
+  .body i{font-style:normal;color:var(--dim);font-size:12px;word-break:break-word}
+  #verdict{margin-top:16px;padding:13px;border-radius:10px;font-size:14px;display:none;line-height:1.45}
+  #verdict.show{display:block}
+  #verdict.g{background:#14301c;border:1px solid var(--ok)}
+  #verdict.a{background:#33290d;border:1px solid var(--warn)}
+  #verdict.r{background:#331714;border:1px solid var(--no)}
+  .copy{width:100%;margin-top:12px;padding:11px;border:1px solid var(--bd);border-radius:9px;
+        background:transparent;color:var(--dim);font:600 12.5px/1 inherit;letter-spacing:.4px}
+  pre{white-space:pre-wrap;word-break:break-word;font-size:11px;color:var(--dim);
+      background:var(--elev);border:1px solid var(--bd);border-radius:9px;padding:10px;display:none;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>Rhema — offline capability probe</h1>
+<div class="sub">Run this on the phone. It measures what the device can do, not what it is supposed to do. Nothing leaves the device.</div>
+
+<div class="facts" id="facts"></div>
+<button id="go">RUN THE PROBE</button>
+<div id="tests"></div>
+<div id="verdict"></div>
+<button class="copy" id="copy" style="display:none">COPY RESULTS AS TEXT</button>
+<pre id="dump"></pre>
+
+<script>
+"use strict";
+var PACK_URL = "bsb.json.gz";
+var results = [];
+var facts = {};
+
+function el(id){ return document.getElementById(id); }
+/* Every dynamic value below goes through esc() before it reaches innerHTML. */
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+function row(key, state, title, detail){
+  results.push({key:key, state:state, title:title, detail:detail||""});
+  var cls = state === "PASS" ? "ok" : state === "FAIL" ? "no" : state === "WARN" ? "warn" : "run";
+  el("tests").insertAdjacentHTML("beforeend",
+    '<div class="row"><div class="tag '+cls+'">'+state+'</div><div class="body"><b>'+esc(title)+
+    '</b><i>'+esc(detail)+'</i></div></div>');
+}
+
+function fact(name, value){ facts[name] = String(value); }
+
+function collectFacts(){
+  var ua = navigator.userAgent || "";
+  fact("User agent", ua);
+  fact("Platform", navigator.platform || "?");
+  var m = /Android\s+([\d.]+)/.exec(ua);
+  fact("Android", m ? m[1] : "not Android");
+  m = /Chrome\/([\d.]+)/.exec(ua);
+  fact("Chromium", m ? m[1] : "?");
+  m = /wv\)/.test(ua);
+  fact("Is WebView", m ? "yes" : "no (browser)");
+  fact("CPU cores", navigator.hardwareConcurrency || "?");
+  fact("deviceMemory", navigator.deviceMemory ? navigator.deviceMemory + " GB" : "not exposed");
+  fact("Screen", window.innerWidth + "x" + window.innerHeight + " @" + (window.devicePixelRatio||1) + "x");
+
+  var html = "";
+  for (var k in facts) html += '<div><span>'+esc(k)+'</span><span>'+esc(facts[k])+'</span></div>';
+  el("facts").innerHTML = html;
+}
+
+function fmtBytes(n){
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n/1024).toFixed(1) + " KB";
+  return (n/1048576).toFixed(2) + " MB";
+}
+
+/* ---- 1. WebAssembly, which the retrieval engine may use ---- */
+function testWasm(){
+  if (typeof WebAssembly !== "object") return row("wasm","FAIL","WebAssembly","Not available.");
+  // A tiny module that returns 42, to prove instantiation actually works.
+  var bytes = new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,127,3,2,1,0,7,7,1,3,114,117,110,0,0,10,6,1,4,0,65,42,11]);
+  try {
+    var inst = new WebAssembly.Instance(new WebAssembly.Module(bytes), {});
+    var got = inst.exports.run();
+    row("wasm", got === 42 ? "PASS" : "FAIL", "WebAssembly",
+        got === 42 ? "Instantiated and executed a test module." : "Module returned " + got);
+  } catch (e) {
+    row("wasm","FAIL","WebAssembly", "Instantiation failed: " + e.message);
+  }
+}
+
+/* ---- 2. gzip decompression, which the pack needs ---- */
+async function testGzip(){
+  if (typeof DecompressionStream !== "function"){
+    return row("gzip","FAIL","DecompressionStream","Not available — the pack would have to ship uncompressed (3.1 MB instead of 0.93 MB).");
+  }
+  try {
+    var src = new Blob([new Uint8Array([31,139,8,0,0,0,0,0,0,3,43,73,45,46,225,2,0,30,151,86,164,5,0,0,0])]);
+    var out = await new Response(src.stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    row("gzip", out.indexOf("hello") === 0 ? "PASS" : "FAIL", "DecompressionStream",
+        'Round-tripped a gzip blob: "' + out.trim() + '"');
+  } catch (e) {
+    row("gzip","FAIL","DecompressionStream","Present but failed: " + e.message);
+  }
+}
+
+/* ---- 3. the real pack, over the network path ---- */
+var packText = null;
+async function testPackFetch(){
+  var t0 = performance.now();
+  try {
+    var r = await fetch(PACK_URL, {cache:"no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    var buf = await r.arrayBuffer();
+    var fetchMs = performance.now() - t0;
+    if (!buf.byteLength) throw new Error("empty response");
+
+    var t1 = performance.now();
+    var text;
+    if (typeof DecompressionStream === "function" && PACK_URL.slice(-3) === ".gz"){
+      text = await new Response(new Blob([buf]).stream()
+        .pipeThrough(new DecompressionStream("gzip"))).text();
+    } else {
+      text = new TextDecoder().decode(buf);
+    }
+    var inflateMs = performance.now() - t1;
+
+    var t2 = performance.now();
+    var pack = JSON.parse(text);
+    var verses = pack.verses && pack.verses.length;
+    var parseMs = performance.now() - t2;
+    packText = null; // do not hold 3 MB of string in scope longer than needed
+
+    var books = pack.books ? pack.books.length : 0;
+    var ok = books === 66 && verses > 31000;
+    row("pack", ok ? "PASS" : "FAIL", "Offline pack round-trip",
+      fmtBytes(buf.byteLength) + " fetched in " + Math.round(fetchMs) + " ms, inflated in " +
+      Math.round(inflateMs) + " ms, parsed in " + Math.round(parseMs) + " ms — " +
+      books + " books, " + verses + " verses");
+  } catch (e) {
+    row("pack","FAIL","Offline pack round-trip","Fetch or parse failed: " + e.message);
+  }
+}
+
+/* ---- 4. IndexedDB, the store for the pack ---- */
+function testIdb(){
+  return new Promise(function(resolve){
+    if (!window.indexedDB) return resolve(row("idb","FAIL","IndexedDB","Not available."));
+    var open;
+    try { open = indexedDB.open("rhema-probe", 1); }
+    catch (e){ return resolve(row("idb","FAIL","IndexedDB","open() threw: " + e.message)); }
+    var t0 = performance.now();
+    open.onupgradeneeded = function(){ open.result.createObjectStore("p"); };
+    open.onerror = function(){ resolve(row("idb","FAIL","IndexedDB","open failed: " + (open.error && open.error.message))); };
+    open.onsuccess = function(){
+      var db = open.result;
+      try {
+        var payload = new Uint8Array(3 * 1024 * 1024);
+        for (var i = 0; i < payload.length; i += 4096) payload[i] = i & 255;
+        var tx = db.transaction("p","readwrite");
+        tx.objectStore("p").put(payload, "pack");
+        tx.oncomplete = function(){
+          var rt = db.transaction("p","readonly").objectStore("p").get("pack");
+          rt.onsuccess = function(){
+            var got = rt.result;
+            var same = got && got.byteLength === payload.length && got[0] === 0;
+            var ms = Math.round(performance.now() - t0);
+            row("idb", same ? "PASS" : "FAIL","IndexedDB",
+              "Wrote and read back 3 MB in " + ms + " ms.");
+            if (navigator.storage && navigator.storage.estimate){
+              navigator.storage.estimate().then(function(est){
+                fact("Storage quota", fmtBytes(est.quota || 0) + " (used " + fmtBytes(est.usage || 0) + ")");
+                var h = "";
+                for (var k in facts) h += '<div><span>'+esc(k)+'</span><span>'+esc(facts[k])+'</span></div>';
+                el("facts").innerHTML = h;
+              }).catch(function(){});
+            }
+            resolve();
+          };
+          rt.onerror = function(){ resolve(row("idb","FAIL","IndexedDB","Read-back failed.")); };
+        };
+        tx.onerror = function(){ resolve(row("idb","FAIL","IndexedDB","Write failed: " + (tx.error && tx.error.message))); };
+      } catch (e){ resolve(row("idb","FAIL","IndexedDB","Transaction threw: " + e.message)); }
+    };
+  });
+}
+
+/* ---- 5. localStorage, still used for small durable state ---- */
+function testLocalStorage(){
+  try {
+    var k = "__rhema_probe__", v = new Array(20000).join("x");
+    localStorage.setItem(k, v);
+    var back = localStorage.getItem(k);
+    localStorage.removeItem(k);
+    row("ls", back === v ? "PASS" : "FAIL","localStorage",
+        back === v ? "Wrote and read back " + fmtBytes(v.length) + "." : "Round-trip mismatch.");
+  } catch (e) {
+    row("ls","FAIL","localStorage","Not usable: " + e.message);
+  }
+}
+
+/* ---- 6. offline behaviour after caching ---- */
+async function testOfflineReuse(){
+  if (!("caches" in window))
+    return row("sw","WARN","Cache API","Not available — chapters would not survive a cache eviction.");
+  try {
+    var c = await caches.open("rhema-probe");
+    await c.add(new Request(PACK_URL, {cache:"reload"}));
+    var hit = await c.match(PACK_URL);
+    await caches.delete("rhema-probe");
+    row("sw", hit ? "PASS" : "FAIL","Cache API",
+        hit ? "Pack cached and served from cache without the network." : "Cache miss after add().");
+  } catch (e) {
+    row("sw","WARN","Cache API","Present but unusable: " + e.message);
+  }
+}
+
+/* ---- 7. WebGPU — recorded for later phases, not required now ---- */
+async function testWebgpu(){
+  if (!navigator.gpu)
+    return row("gpu","WARN","WebGPU","Absent. Not needed for the offline Bible; would matter for a future on-device generator.");
+  try {
+    var a = await navigator.gpu.requestAdapter();
+    if (!a) return row("gpu","WARN","WebGPU","navigator.gpu exists but no adapter was granted.");
+    var info = a.info || {};
+    row("gpu","PASS","WebGPU","Adapter available: " + (info.vendor || "?") + " " + (info.architecture || ""));
+  } catch (e) {
+    row("gpu","WARN","WebGPU","Adapter request failed: " + e.message);
+  }
+}
+
+function verdict(){
+  var byKey = {};
+  results.forEach(function(r){ byKey[r.key] = r.state; });
+  var required = ["wasm","gzip","pack","idb","ls"];
+  var hardFail = required.filter(function(k){ return byKey[k] === "FAIL"; });
+  var warned = results.filter(function(r){ return r.state === "WARN"; }).map(function(r){ return r.title; });
+
+  var box = el("verdict");
+  box.classList.add("show");
+  var grade, msg;
+  if (hardFail.length){
+    grade = "r";
+    msg = "NOT READY on this device. Failed: " + hardFail.join(", ") +
+          ". The offline feature would need a fallback for each.";
+  } else if (warned.length){
+    grade = "a";
+    msg = "READY WITH CAVEATS. Everything required works. Watch: " + warned.join(", ") + ".";
+  } else {
+    grade = "g";
+    msg = "READY. This device can install the offline Bible and search it locally.";
+  }
+  box.className = "show " + grade;
+  box.innerHTML = "<b>" + esc(msg) + "</b>";
+  el("copy").style.display = "block";
+}
+
+function dump(){
+  var out = "RHEMA OFFLINE CAPABILITY PROBE\n" + new Date().toISOString() + "\n\n";
+  for (var k in facts) out += k + ": " + facts[k] + "\n";
+  out += "\n";
+  results.forEach(function(r){
+    out += "[" + r.state + "] " + r.title + (r.detail ? " — " + r.detail : "") + "\n";
+  });
+  return out;
+}
+
+el("go").addEventListener("click", async function(){
+  el("go").disabled = true;
+  el("go").textContent = "RUNNING…";
+  el("tests").innerHTML = "";
+  results = [];
+  try {
+    testWasm();
+    await testGzip();
+    await testPackFetch();
+    await testIdb();
+    testLocalStorage();
+    await testOfflineReuse();
+    await testWebgpu();
+  } catch (e) {
+    row("fatal","FAIL","Probe aborted","Unexpected error: " + (e && e.message));
+  }
+  verdict();
+  el("go").textContent = "RUN AGAIN";
+  el("go").disabled = false;
+});
+
+el("copy").addEventListener("click", function(){
+  var text = dump();
+  el("dump").textContent = text;
+  el("dump").style.display = "block";
+  el("dump").scrollIntoView({behavior:"smooth"});
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(function(){});
+  }
+});
+
+collectFacts();
+</script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rhema Probe">
+<meta name="theme-color" content="#0e1016">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230e1016'/%3E%3Ctext x='90' y='122' font-size='96' text-anchor='middle' fill='%23c9a24b' font-family='Georgia,serif'%3ER%3C/text%3E%3C/svg%3E">
+<title>Rhema · iOS capability probe</title>
+<style>
+  :root{
+    --ink:#0e1016; --panel:#161a24; --line:#2a3140; --parch:#e9e3d4;
+    --muted:#8c8775; --gold:#c9a24b; --ok:#7fa86b; --bad:#bf4035; --warn:#d5a13a;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--parch);font-family:var(--font);
+       padding:calc(env(safe-area-inset-top,0px) + 18px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);
+       -webkit-text-size-adjust:100%;overscroll-behavior-y:contain}
+  h1{font-size:19px;margin:0 0 2px;letter-spacing:-.2px}
+  .sub{color:var(--muted);font-size:12.5px;font-family:var(--mono);margin-bottom:16px}
+  #verdict{border:1px solid var(--line);border-left:4px solid var(--muted);background:var(--panel);
+           border-radius:6px;padding:14px 15px;margin-bottom:16px}
+  #verdict .big{font-size:16px;font-weight:600;margin-bottom:6px}
+  #verdict .why{font-size:13px;color:var(--muted);line-height:1.5}
+  .pass{border-left-color:var(--ok)!important} .pass .big{color:var(--ok)}
+  .fail{border-left-color:var(--bad)!important} .fail .big{color:var(--bad)}
+  .part{border-left-color:var(--warn)!important} .part .big{color:var(--warn)}
+  .row{display:flex;gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line);
+       font-size:13.5px}
+  .row:last-child{border-bottom:none}
+  .name{flex:1}
+  .val{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;max-width:52%}
+  .tag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid var(--line)}
+  .t-ok{color:var(--ok);border-color:var(--ok)} .t-bad{color:var(--bad);border-color:var(--bad)}
+  .t-warn{color:var(--warn);border-color:var(--warn)}
+  h2{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+     color:var(--gold);margin:22px 0 6px;border-top:1px solid var(--gold);padding-top:8px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 14px}
+  .fx{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px;word-break:break-all}
+  button{font-family:var(--mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;
+         background:var(--gold);color:#16120a;border:none;border-radius:5px;padding:12px 16px;
+         font-weight:700;margin-top:18px;width:100%;min-height:44px}
+  .inset{position:fixed;background:rgba(201,162,75,.35);pointer-events:none;z-index:9}
+  #insetT{top:0;left:0;right:0;height:env(safe-area-inset-top,0px)}
+  #insetB{bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px)}
+  .note{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:14px}
+  code{font-family:var(--mono);font-size:11.5px;color:var(--parch)}
+</style>
+</head>
+<body>
+<div class="inset" id="insetT"></div><div class="inset" id="insetB"></div>
+
+<h1>Rhema · iOS capability probe</h1>
+<div class="sub" id="ua">reading device…</div>
+
+<div id="verdict"><div class="big">Testing…</div><div class="why">Running 10 checks.</div></div>
+
+<div class="card" id="rows"></div>
+
+<div id="detail"></div>
+
+<h2>How to send me the result</h2>
+<div class="note">
+  Tap <b>Copy result</b> below and paste it into the chat. That single block is all I need — it
+  replaces guessing about WKWebView behaviour with measurements from your actual device.
+</div>
+<button id="copy">Copy result</button>
+<div class="fx" id="copyState"></div>
+
+<script>
+"use strict";
+/* Security note: every innerHTML assignment below is a STATIC markup string; all
+   device-derived values (UA, timings, error text, check results) are written with
+   textContent, never interpolated into markup. No untrusted string reaches innerHTML. */
+const R = [];           // {name, status:'ok'|'bad'|'warn', value}
+const rows = document.getElementById('rows');
+const detail = document.getElementById('detail');
+
+function add(name, status, value){
+  R.push({name, status, value});
+  const row = document.createElement('div');
+  row.className = 'row';
+  const cls = status === 'ok' ? 't-ok' : status === 'bad' ? 't-bad' : 't-warn';
+  const label = status === 'ok' ? 'PASS' : status === 'bad' ? 'FAIL' : 'INFO';
+  row.innerHTML = '<span class="name"></span><span class="val"></span><span class="tag ' + cls + '">' + label + '</span>';
+  row.querySelector('.name').textContent = name;
+  row.querySelector('.val').textContent = value;
+  rows.appendChild(row);
+}
+const kb = n => (n/1024).toFixed(0) + ' KB';
+const mb = n => (n/1048576).toFixed(2) + ' MB';
+
+// ---------------------------------------------------------------- 1. environment
+function t_env(){
+  const d = window.navigator;
+  const standalone = window.navigator.standalone === true ||
+                     window.matchMedia('(display-mode: standalone)').matches;
+  return {ua: d.userAgent, standalone, screen: screen.width + 'x' + screen.height,
+          dpr: window.devicePixelRatio};
+}
+const ENV = t_env();
+document.getElementById('ua').textContent = ENV.ua.slice(0, 90) + ' · ' + ENV.screen + ' @' + ENV.dpr + 'x';
+
+add('Add-to-Home-Screen (standalone)', ENV.standalone ? 'ok' : 'warn',
+    ENV.standalone ? 'installed' : 'running in Safari tab');
+add('safe-area insets (notch/home bar)', 'ok',
+    'top ' + (getComputedStyle(document.getElementById('insetT')).height) +
+    ' · bottom ' + (getComputedStyle(document.getElementById('insetB')).height));
+
+// ---------------------------------------------------------------- 2. IndexedDB, 3 MB
+async function t_idb(){
+  if (!window.indexedDB) return add('IndexedDB', 'bad', 'missing');
+  const DB = 'rhema_probe', STORE = 'blobs';
+  const open = () => new Promise((res, rej) => {
+    const rq = indexedDB.open(DB, 1);
+    rq.onupgradeneeded = () => { const db = rq.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE); };
+    rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+  });
+  try{
+    const db = await open();
+    const SIZE = 3 * 1024 * 1024;                       // a real Bible pack is ~0.93 MB gz; test 3x
+    const bytes = new Uint8Array(SIZE);
+    for (let i = 0; i < SIZE; i += 997) bytes[i] = i % 251;   // deterministic checksum pattern
+    let sum = 0; for (let i = 0; i < SIZE; i++) sum = (sum + bytes[i]) % 1e9;
+
+    const t0 = performance.now();
+    await new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(bytes, 'pack');
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+    const writeMs = performance.now() - t0;
+
+    const t1 = performance.now();
+    const back = await new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const rq = tx.objectStore(STORE).get('pack');
+      rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+    });
+    const readMs = performance.now() - t1;
+    const arr = back instanceof Uint8Array ? back : new Uint8Array(back);
+    let sum2 = 0; for (let i = 0; i < arr.length; i++) sum2 = (sum2 + arr[i]) % 1e9;
+    const intact = arr.length === SIZE && sum2 === sum;
+    add('IndexedDB 3 MB write → read', intact ? 'ok' : 'bad',
+        (intact ? 'intact · ' : 'CORRUPT · ') + 'w ' + writeMs.toFixed(0) + 'ms · r ' + readMs.toFixed(0) + 'ms');
+    // persistence across reloads
+    await new Promise(res => { const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put((JSON.parse(localStorage.getItem('probe_hits') || '0')), 'hits');
+      tx.oncomplete = res; tx.onerror = res; });
+  }catch(e){ add('IndexedDB 3 MB write → read', 'bad', String(e).slice(0, 80)); }
+}
+
+// ---------------------------------------------------------------- 3. storage quota + persistence
+async function t_quota(){
+  if (!navigator.storage || !navigator.storage.estimate) return add('Storage estimate', 'warn', 'API missing');
+  try{
+    const est = await navigator.storage.estimate();
+    add('Storage quota (navigator.storage)', 'ok',
+        'quota ' + mb(est.quota) + ' · used ' + mb(est.usage || 0));
+  }catch(e){ add('Storage quota (navigator.storage)', 'warn', String(e).slice(0, 60)); }
+  if (navigator.storage.persist){
+    try{ const granted = await navigator.storage.persist();
+      add('navigator.storage.persist()', granted ? 'ok' : 'bad',
+          granted ? 'granted — storage not evictable' : 'DENIED — iOS may evict after ~7 days');
+    }catch(e){ add('navigator.storage.persist()', 'warn', String(e).slice(0, 60)); }
+  } else add('navigator.storage.persist()', 'bad', 'unsupported on this engine');
+}
+
+// ---------------------------------------------------------------- 4. localStorage ceiling
+function t_ls(){
+  const KEY = 'probe_ls_';
+  let written = 0, chunk = 'x'.repeat(65536);
+  try{
+    localStorage.removeItem('probe_ls_size');
+    for (let i = 0; i < 400; i++){                       // up to ~25 MB attempt
+      localStorage.setItem(KEY + i, chunk); written += chunk.length;
+    }
+    localStorage.removeItem('probe_ls_size');
+    for (let i = 0; i < 400; i++) localStorage.removeItem(KEY + i);
+    add('localStorage ceiling', 'ok', '≥ ' + mb(written) + ' (no limit hit at 25 MB)');
+    return;
+  }catch(e){
+    for (let i = 0; i < 400; i++) localStorage.removeItem(KEY + i);
+    add('localStorage ceiling', written >= 3 * 1048576 ? 'ok' : 'bad',
+        mb(written) + ' before QuotaExceededError');
+  }
+}
+
+// ---------------------------------------------------------------- 5. gzip inflate path
+async function t_gzip(){
+  if (typeof DecompressionStream !== 'function') return add('DecompressionStream gzip', 'bad', 'missing');
+  try{
+    const src = 'Rhema offline Bible pack inflate test — '.repeat(400);
+    const cs = new CompressionStream('gzip');
+    const gzBlob = await new Response(new Blob([src]).stream().pipeThrough(cs)).blob();
+    const t0 = performance.now();
+    const out = await new Response(gzBlob.stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    const ms = performance.now() - t0;
+    add('DecompressionStream gzip round-trip', out === src ? 'ok' : 'bad',
+        kb(src.length) + ' → ' + kb(gzBlob.size) + ' gz → inflate ' + ms.toFixed(1) + 'ms');
+  }catch(e){ add('DecompressionStream gzip round-trip', 'bad', String(e).slice(0, 80)); }
+}
+
+// ---------------------------------------------------------------- 6. wasm / cache / worker
+function t_engine(){
+  const wasm = typeof WebAssembly === 'object' && typeof WebAssembly.compile === 'function';
+  add('WebAssembly', wasm ? 'ok' : 'bad', wasm ? 'available' : 'missing');
+  const cache = 'caches' in window;
+  add('Cache API', cache ? 'ok' : 'bad', cache ? 'available' : 'missing');
+  const sw = 'serviceWorker' in navigator;
+  add('Service worker', sw ? 'ok' : 'bad', sw ? 'available' : 'missing (no offline shell)');
+  const tts = 'speechSynthesis' in window;
+  add('speechSynthesis', tts ? 'ok' : 'warn', tts ? 'available' : 'missing');
+}
+
+// ---------------------------------------------------------------- 7. verdict
+async function run(){
+  t_engine();
+  t_ls();
+  await t_idb();
+  await t_quota();
+  await t_gzip();
+
+  const bad = R.filter(r => r.status === 'bad');
+  const warn = R.filter(r => r.status === 'warn');
+  const box = document.getElementById('verdict');
+  const big = box.querySelector('.big'), why = box.querySelector('.why');
+  const hard = bad.filter(r => /IndexedDB|persist|DecompressionStream|localStorage/.test(r.name));
+
+  let cls, title;
+  if (hard.length){ cls = 'fail'; title = 'NOT READY — native wrapper required';
+    why.textContent = 'Storage or inflate failed on this device: ' +
+      hard.map(r => r.name + ' (' + r.value + ')').join('; ') +
+      '. The offline Bible pack cannot work as a web app here; it needs the native container to write files to disk instead of browser storage.'; }
+  else if (warn.length){ cls = 'part'; title = 'READY — web app works, with caveats';
+    why.textContent = warn.map(r => r.name + ': ' + r.value).join('; ') +
+      '. Works today from a link; the native wrapper removes those caveats.'; }
+  else { cls = 'pass'; title = 'READY — web app viable on this device';
+    why.textContent = 'Every storage, inflate and engine check passed in Safari. The native wrapper is still worth it for App Store presence, native share/PDF and non-evictable storage.'; }
+  box.className = cls; big.textContent = title;
+
+  // detail block for copy/paste
+  const lines = ['RHEMA iOS PROBE — ' + new Date().toISOString().slice(0,19),
+    'device: ' + ENV.ua, 'screen: ' + ENV.screen + ' @' + ENV.dpr + 'x',
+    'verdict: ' + title, ''].concat(R.map(r => '[' + r.status.toUpperCase() + '] ' + r.name + ' — ' + r.value));
+  document.getElementById('copyState').textContent = '';
+  window.__report = lines.join('\n');
+
+  const pre = document.createElement('div');
+  pre.className = 'card'; pre.style.marginTop = '14px';
+  pre.innerHTML = '<div class="fx" style="white-space:pre-wrap;font-size:11px"></div>';
+  pre.querySelector('div').textContent = window.__report;
+  document.getElementById('detail').innerHTML = '<h2>Full result</h2>';
+  document.getElementById('detail').appendChild(pre);
+}
+
+document.getElementById('copy').addEventListener('click', async () => {
+  const txt = window.__report || 'probe still running';
+  try{ await navigator.clipboard.writeText(txt); document.getElementById('copyState').textContent = 'Copied — paste it in the chat.'; }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.cssText = 'position:fixed;top:-9999px';
+    document.body.appendChild(ta); ta.select();
+    const okCopy = document.execCommand && document.execCommand('copy');
+    ta.remove();
+    document.getElementById('copyState').textContent = okCopy ? 'Copied — paste it in the chat.' : 'Copy failed — screenshot the block above instead.';
+  }
+});
+
+run();
+</script>
+</body>
+</html>

@@ -4,6 +4,17 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- iOS web-app chrome: installed to the Home Screen this runs standalone, with the
+     dark status bar blended into the app. The manifest + apple-touch-icon are the
+     install surface; the app is otherwise unchanged. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rhema">
+<meta name="theme-color" content="#0e1016">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https:; object-src 'none'; base-uri 'none'; form-action 'self'">
 <!-- CSP note: connect-src must include 'self' or the same-origin AI proxy
      (/proxy/ai/, served by rhema-server.js) is blocked along with every other
@@ -63,7 +74,7 @@ input,textarea,select{font:inherit;}
 .tab-btn svg{width:24px;height:24px;}
 .tab-label{font-size:var(--fs-1);letter-spacing:0.5px;font-weight:500;}
 /* HOME */
-.home-header{background:var(--surface);padding:48px 20px 20px;border-bottom:1px solid var(--border);}
+.home-header{background:var(--surface);padding:calc(48px + env(safe-area-inset-top,0px)) 20px 20px;border-bottom:1px solid var(--border);}
 .home-greeting{font-family:'Cinzel',serif;font-size:var(--fs-2);letter-spacing:3px;color:var(--gold);margin-bottom:8px;padding-right:60px;}
 .home-title{font-family:'Cinzel',serif;font-size:var(--fs-7);color:var(--text-1);font-weight:400;padding-right:60px;}
 .streak-bar{display:flex;align-items:center;gap:12px;background:var(--elev);border-radius:var(--r-md);padding:12px 16px;margin:16px 20px;border:1px solid var(--border);}
@@ -1074,6 +1085,21 @@ img{ -webkit-user-drag:none; }
   #screen-notes .notes-header,#notes-list{max-width:820px;margin-left:auto;margin-right:auto;}
   .new-note-input{max-width:720px;}
   .verse-text{font-size:var(--fs-6);}
+}
+/* ── iOS web-app polish (Safari / installed Home Screen app only) ───────────────
+   The @supports test below is true on iOS Safari and WKWebView, false on Android
+   Chrome and desktop Chromium — so nothing in this block can change the APK's
+   rendering. Placed LAST in the stylesheet on purpose: at equal specificity the later
+   rule wins, and an override block earlier in the file loses to the component rules
+   further down.
+   - 16px minimum on real form controls stops Safari's automatic page zoom on focus.
+   - touch-callout off stops the long-press copy/share sheet fighting the app's own
+     selection UI; user-select is left intact so the reader still selects text.
+   - overscroll-behaviour stops the page rubber-banding behind the fixed tab bar. */
+@supports (-webkit-touch-callout: none){
+  input,textarea,select{font-size:16px;}
+  html,body{overscroll-behavior-y:none;-webkit-touch-callout:none;}
+  .tab-btn,.sheet,.card{touch-action:manipulation;}
 }
 </style>
 </head>
@@ -5019,27 +5045,118 @@ function reasoningBudget(q){
   if(n>=60)return 4000;
   return 2000;
 }
-// ═══ OFFLINE CHAPTER CACHE (v2) ══════════════════════════════════
-function chCacheKey(bookUsfm,translation,chapter){return 'cx_ch_'+translation+'_'+bookUsfm+'_'+chapter;}
-function chCacheGet(bookUsfm,translation,chapter){
-  try{const o=load(chCacheKey(bookUsfm,translation,chapter),null);return (o&&o.data)?o:null;}catch(_){return null;}
+// ═══ OFFLINE CHAPTER CACHE (v3) — IndexedDB ══════════════════════
+// WHY v3: iOS caps script-writable localStorage near ~5 MB and evicts it after ~7 days
+// of non-use, which silently destroys the offline Bible on exactly the platform we are
+// porting to. Bulk chapter TEXT therefore lives in IndexedDB (quota is orders of
+// magnitude larger and persistable via navigator.storage.persist()); small user state
+// (highlights, plans, XP, notes) stays in localStorage, where a few KB is safe.
+// v2 also capped the cache at 120 chapters, so "Download All" could never retain the
+// ~1,189-chapter Bible — that cap is gone; the bound now tracks what IDB can hold.
+// Reads stay synchronous against an in-memory map (`_chMem`) so the chapter render path
+// is not restructured; the map is hydrated from IDB as it is used.
+const CHDB_NAME='rhema_offline', CHDB_STORE='chapters', CH_CAP=4000;
+let _chdbPromise=null, _chMem=Object.create(null), _chCount=0, _chMigrated=false;
+function chdbOpen(){
+  if(_chdbPromise)return _chdbPromise;
+  _chdbPromise=new Promise((res,rej)=>{
+    if(!window.indexedDB){rej(new Error('no indexedDB'));return;}
+    const rq=indexedDB.open(CHDB_NAME,1);
+    rq.onupgradeneeded=()=>{const db=rq.result;
+      if(!db.objectStoreNames.contains(CHDB_STORE))db.createObjectStore(CHDB_STORE);};
+    rq.onsuccess=()=>res(rq.result);
+    rq.onerror=()=>rej(rq.error||new Error('idb open failed'));
+  });
+  return _chdbPromise;
 }
-function chCacheSet(bookUsfm,translation,chapter,data){
+async function chdb(){try{return await chdbOpen();}catch(_){return null;}}
+function chTx(db,mode){return db.transaction(CHDB_STORE,mode).objectStore(CHDB_STORE);}
+function chCacheKey(bookUsfm,translation,chapter){return 'cx_ch_'+translation+'_'+bookUsfm+'_'+chapter;}
+async function chCacheGet(bookUsfm,translation,chapter){
+  const key=chCacheKey(bookUsfm,translation,chapter);
+  if(_chMem[key])return _chMem[key];
+  const db=await chdb();if(!db)return null;
   try{
-    store(chCacheKey(bookUsfm,translation,chapter),{data:data,ts:Date.now()});
-    try{
-      const keys=Object.keys(localStorage).filter(k=>k.indexOf('cx_ch_')===0);
-      if(keys.length>120){
-        keys.sort((a,b)=>{const A=load(a,null)||{},B=load(b,null)||{};return (A.ts||0)-(B.ts||0);});
-        keys.slice(0,keys.length-120).forEach(k=>localStorage.removeItem(k));
-      }
-    }catch(_){}
+    const rec=await new Promise((res,rej)=>{
+      const rq=chTx(db,'readonly').get(key);
+      rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>rej(rq.error);});
+    if(rec&&rec.data){_chMem[key]=rec;}
+    return (rec&&rec.data)?rec:null;
+  }catch(_){return null;}
+}
+async function chCacheSet(bookUsfm,translation,chapter,data){
+  const key=chCacheKey(bookUsfm,translation,chapter), rec={data:data,ts:Date.now()};
+  const had=!!_chMem[key];
+  _chMem[key]=rec;if(!had)_chCount++;
+  const db=await chdb();if(!db)return;
+  try{
+    await new Promise((res,rej)=>{const rq=chTx(db,'readwrite').put(rec,key);
+      rq.onsuccess=()=>res();rq.onerror=()=>rej(rq.error);});
+    if(_chCount>CH_CAP)await chPrune(db);
   }catch(_){}
 }
-function countOfflineChapters(){try{return Object.keys(localStorage).filter(k=>k.indexOf('cx_ch_')===0).length;}catch(_){return 0;}}
+// Trim oldest-first only when the cap is exceeded — reading every ts is fine at this size.
+async function chPrune(db){
+  try{
+    const rows=await new Promise((res,rej)=>{
+      const out=[];const rq=chTx(db,'readonly').openCursor();
+      rq.onsuccess=()=>{const c=rq.result;if(!c){res(out);return;}out.push([c.key,(c.value&&c.value.ts)||0]);c.continue();};
+      rq.onerror=()=>rej(rq.error);});
+    if(rows.length<=CH_CAP)return;
+    rows.sort((a,b)=>a[1]-b[1]);
+    const drop=rows.slice(0,rows.length-CH_CAP);
+    await new Promise((res,rej)=>{const rq=chTx(db,'readwrite');
+      drop.forEach(([k])=>{rq.delete(k);delete _chMem[k];});
+      rq.transaction.oncomplete=()=>res();rq.transaction.onerror=()=>rej();});
+    _chCount=Math.max(0,_chCount-drop.length);
+  }catch(_){}
+}
+async function chCount(){const db=await chdb();if(!db)return Object.keys(_chMem).length;
+  try{return await new Promise((res,rej)=>{const rq=chTx(db,'readonly').count();
+    rq.onsuccess=()=>res(rq.result||0);rq.onerror=()=>rej(rq.error);});}catch(_){return Object.keys(_chMem).length;}}
+async function chClear(){const db=await chdb();if(db){try{await new Promise((res,rej)=>{
+  const rq=chTx(db,'readwrite').clear();rq.onsuccess=()=>res();rq.onerror=()=>rej(rq.error);});}catch(_){}}
+  _chMem=Object.create(null);_chCount=0;}
+function countOfflineChapters(){return _chCount;}
+async function refreshOfflineCount(){_chCount=await chCount();refreshOfflineInfo();return _chCount;}
 function clearOfflineCache(){
-  try{Object.keys(localStorage).filter(k=>k.indexOf('cx_ch_')===0).forEach(k=>localStorage.removeItem(k));}catch(_){}
-  refreshOfflineInfo();toast('Offline chapters cleared');
+  chClear().then(()=>{refreshOfflineInfo();toast('Offline chapters cleared');});
+}
+// One-time move of any v2 localStorage chapters into IndexedDB, freeing the quota the
+// old build was squatting on. Runs once per install; safe to re-enter.
+async function migrateLsChapters(){
+  if(_chMigrated)return;_chMigrated=true;
+  let keys=[];
+  try{keys=Object.keys(localStorage).filter(k=>k.indexOf('cx_ch_')===0);}catch(_){return;}
+  if(!keys.length)return;
+  const db=await chdb();if(!db)return;
+  let moved=0;
+  for(const k of keys){
+    try{
+      const o=JSON.parse(localStorage.getItem(k));
+      if(o&&o.data){
+        await new Promise((res,rej)=>{const rq=chTx(db,'readwrite').put(o,k);
+          rq.onsuccess=()=>res();rq.onerror=()=>rej(rq.error);});
+        moved++;
+      }
+      localStorage.removeItem(k);
+    }catch(_){try{localStorage.removeItem(k);}catch(__){}}
+  }
+  return moved;
+}
+// Ask the browser to keep this origin's storage; iOS may otherwise evict it after
+// ~7 days without a visit. Failure is non-fatal — the app still works, it just caches less.
+async function requestPersistentStorage(){
+  try{
+    if(navigator.storage&&navigator.storage.persisted){
+      if(await navigator.storage.persisted())return 'persisted';
+    }
+    if(navigator.storage&&navigator.storage.persist){
+      const ok=await navigator.storage.persist();
+      return ok?'granted':'denied';
+    }
+  }catch(_){}
+  return 'unsupported';
 }
 function refreshOfflineInfo(){const el=document.getElementById('offline-info');if(el)el.textContent='Chapters cached: '+countOfflineChapters();}
 // ═══ MOMENTUM (v2) — streak · book progress · level ══════════════
@@ -5224,7 +5341,7 @@ async function loadChapter(){
   prevBtn.style.opacity=atStart?'0.3':'1';nextBtn.style.opacity=atEnd?'0.3':'1';
   let lastErr=null;
   // Offline cache (v2): serve fresh copy instantly, stale copy as fallback.
-  const cached=chCacheGet(book[1],translation,chapter);
+  const cached=await chCacheGet(book[1],translation,chapter);
   if(cached&&(Date.now()-cached.ts)<7*86400000){
     S.chapterData=cached.data;renderChapter(cached.data,book[0]);addXP(5);saveS();
     return;
@@ -5257,7 +5374,7 @@ async function loadChapter(){
     return;
   }catch(e3){if(!current())return;lastErr=lastErr||e3;}
   if(!current())return;
-  const stale=chCacheGet(book[1],translation,chapter);
+  const stale=await chCacheGet(book[1],translation,chapter);
   if(stale){
     S.chapterData=stale.data;renderChapter(stale.data,book[0]);addXP(5);saveS();
     toast('Offline copy — reconnect to refresh');
@@ -5400,7 +5517,7 @@ async function loadCompare(){
   prevBtn.style.opacity=atStart?'0.3':'1';nextBtn.style.opacity=atEnd?'0.3':'1';
   const ids=(Array.isArray(S.cmp)&&S.cmp.length)?S.cmp.slice(0,3):['BSB','ENGWEBP'];
   const results=await Promise.all(ids.map(async id=>{
-    const cached=chCacheGet(book[1],id,chapter);
+    const cached=await chCacheGet(book[1],id,chapter);
     if(cached&&(Date.now()-cached.ts)<7*86400000)return {id,verses:cached.data,cached:true};
     try{
       // race both sources — first success wins, no sequential 8s wait
@@ -5794,7 +5911,7 @@ async function selectChapter(bookIdx,ch){
   const c=document.getElementById('book-selector-content');
   c.innerHTML=`<div class="modal-title" style="display:flex;align-items:center;gap:12px;"><button type="button" class="modal-back-btn" aria-label="Back to chapters" onclick="selectBook(${bookIdx})">← Back</button><span>${book[0].toUpperCase()} ${ch}</span></div><div style="padding:24px;text-align:center;"><div class="spinner" style="margin:0 auto 10px;"></div><div style="font-size:12px;color:var(--text-3);">Loading verses…</div></div>`;
   let verses=null;
-  const cch=chCacheGet(book[1],S.translation,ch);
+  const cch=await chCacheGet(book[1],S.translation,ch);
   if(cch&&(Date.now()-cch.ts)<7*86400000)verses=cch.data;
   if(!verses){try{verses=await fetchHelloAO(book[1],S.translation,ch);}catch(e){}}
   if(!verses||!verses.length){try{verses=await fetchJsDelivr(book[0],S.translation,ch);}catch(e){}}
@@ -9133,22 +9250,34 @@ async function downloadFullBible(){
     for(let i=0;i<ALL_BOOKS.length;i++){
       const book=ALL_BOOKS[i];
       for(let ch=1;ch<=book[2];ch++){
-        const key=chCacheKey(book[1],trans,ch);
-        if(load(key,null))continue; // already cached
+        if(await chCacheGet(book[1],trans,ch))continue; // already cached (IndexedDB)
         try{
           const verses=await fetchHelloAO(book[1],trans,ch);
-          if(verses&&verses.length){chCacheSet(book[1],trans,ch,verses);count++;}
+          if(verses&&verses.length){await chCacheSet(book[1],trans,ch,verses);count++;}
         }catch(_){}
+        if(count&&count%100===0)toast('Downloading… '+count+' chapters stored');
       }
     }
     toast('✓ Downloaded '+count+' chapters of '+trans);
-    refreshOfflineInfo();
+    await refreshOfflineCount();
   }catch(e){toast('Download failed: '+e.message);}
 }
 // ── MOTION BOOT ────────────────────────────────────────────────────
 // Delegated, so cards rendered later (characters, prayers, topics) get the same
 // press spring without re-binding. Passive: never blocks the gesture.
 try{if(typeof Motion!=='undefined')Motion.bindPress(document);}catch(_){}
+// Offline cache v3 boot: migrate any v2 localStorage chapters into IndexedDB, publish
+// the real count, and ask the browser to keep this origin's storage (iOS evicts
+// non-persisted origins after ~7 days without a visit).
+try{
+  migrateLsChapters()
+    .then(moved=>{if(moved)console.log('[offline] migrated '+moved+' chapters localStorage -> IndexedDB');})
+    .catch(()=>{})
+    .then(()=>refreshOfflineCount())
+    .then(()=>requestPersistentStorage())
+    .then(state=>{if(state&&state!=='persisted'&&state!=='granted')console.warn('[offline] storage persistence: '+state);})
+    .catch(()=>{});
+}catch(_){}
 init();
 </script>
 </body>

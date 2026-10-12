@@ -5144,6 +5144,36 @@ async function migrateLsChapters(){
   }
   return moved;
 }
+// ── Browser transport repair (why AI can look fine in code and be dead on a real URL) ──
+// The app routes AI through a same-origin /proxy/ai/ hop that rhema-server.js provides. On a
+// STATIC host (GitHub Pages) that route simply does not exist: the request 404s and EVERY AI
+// feature dies while the rest of the app looks perfectly healthy. The old code assumed the
+// proxy was there whenever the page was on http(s) and had no fallback — `S.directAI` was read
+// in two places and never set anywhere, so there was no user-reachable way out of it.
+// So: probe the hop once per launch. When it is absent, call providers directly, and move off a
+// provider that cannot answer a browser at all (opencode.ai sends no CORS headers) to the
+// DeepSeek direct preset, which is measurably browser-reachable.
+let _proxyChecked=false;
+async function repairAiTransport(){
+  if(_proxyChecked)return 'checked';
+  _proxyChecked=true;
+  if(!AI_PROXY){S.directAI=true;return 'no-http-origin';}   // file:// — the APK path, already direct
+  let present=true;
+  try{ present=(await fetch(AI_PROXY+'transport-probe',{method:'POST'})).status!==404; }
+  catch(e){ present=false; }
+  if(present)return 'proxy-present';
+  S.directAI=true;
+  const chosen=load('cx_provider_preset','');
+  if(S.baseUrl.includes('opencode.ai')&&(chosen===''||chosen==='ocgo')){
+    // Reuse the supported path: switchProvider stamps url+model+key TOGETHER (a preset that
+    // forwards the previous origin's key 401s on every call).
+    if(typeof switchProvider==='function')switchProvider('deepseek');
+    else{S.directAI=true;}
+  }
+  console.info('[ai] no same-origin proxy on this host — provider calls go direct');
+  return 'direct';
+}
+
 // Ask the browser to keep this origin's storage; iOS may otherwise evict it after
 // ~7 days without a visit. Failure is non-fatal — the app still works, it just caches less.
 async function requestPersistentStorage(){
@@ -9270,6 +9300,7 @@ try{if(typeof Motion!=='undefined')Motion.bindPress(document);}catch(_){}
 // the real count, and ask the browser to keep this origin's storage (iOS evicts
 // non-persisted origins after ~7 days without a visit).
 try{
+  repairAiTransport();
   migrateLsChapters()
     .then(moved=>{if(moved)console.log('[offline] migrated '+moved+' chapters localStorage -> IndexedDB');})
     .catch(()=>{})

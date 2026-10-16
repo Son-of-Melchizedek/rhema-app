@@ -8706,13 +8706,28 @@ async function genuiEnsure(el,prose,full){
 // is free to decline). So the app checks and, when an answer's block has neither a figure nor a map,
 // asks for exactly one. Resolution still fails closed — an unresolvable subject shows nothing rather
 // than a wrong image.
+// A component's ROOT is .genui-comp, not .gl-fig — that class sits on the CARD inside it. Testing only
+// the root rejected every picture the model offered, so the fallback was doing all the work and the
+// model's own candidates were silently discarded. Accept either: the card itself, or a component
+// that contains one.
 function genuiIsPictureEl(el){
-  return !!(el&&el.classList&&(el.classList.contains('gl-fig')||el.classList.contains('gl-map')));
+  if(!el||!el.classList)return false;
+  if(el.classList.contains('gl-fig')||el.classList.contains('gl-map'))return true;
+  return !!(el.querySelector&&el.querySelector('.gl-fig, .gl-map'));
 }
 async function genuiEnsurePicture(el,prose){
   const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
   if(!bubble)return 0;
-  if(bubble.querySelector('.gl-fig, .gl-map'))return 0;          // it already has one
+  // "Has a figure" must mean a figure that actually resolved. A card whose subject failed leaves a
+  // HIDDEN, empty .gl-fig in the DOM (gl-fig-empty + the frame removed), and an early return on mere
+  // presence meant the fallback never ran — so an answer with a broken picture got no picture at all.
+  const picOk=Array.from(bubble.querySelectorAll('.gl-fig, .gl-map')).some(function(el){
+    if(el.classList.contains('gl-fig-empty'))return false;
+    if(el.classList.contains('gl-map'))return !!el.querySelector('svg circle');
+    const img=el.querySelector('img');
+    return !!(img&&img.getAttribute('src'));
+  });
+  if(picOk)return 0;          // a real picture is already there
   const txt=String(prose||'').trim();
   if(txt.length<40||/^No response received/i.test(txt))return 0;
   let wrap=bubble.querySelector('.genui');

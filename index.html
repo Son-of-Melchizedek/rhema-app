@@ -1113,6 +1113,91 @@ img{ -webkit-user-drag:none; }
 #screen-chat.chips-idle .chat-quick-chips{opacity:0;transform:translateX(-50%) translateY(14px);pointer-events:none;}
 #screen-chat.chips-idle #chat-context-bar{display:none!important;}
 
+/* ══ GENUI: interactive teaching components in Ask answers ══════════════════════════
+   The model returns prose plus a heading-cased ```genui block naming components and their
+   data; the app validates that against an allowlist and renders it here. Model-authored code
+   is never executed and never injected as markup — every string arrives through textContent.
+   No CDN is possible (CSP script-src 'self' 'unsafe-inline'), so every visual is hand-built
+   from SVG and CSS, which is also why these read as one system with the app's own gauge. */
+.genui{margin-top:14px;display:flex;flex-direction:column;gap:12px;}
+.genui-comp{background:var(--elev);border:1px solid var(--border);border-radius:12px;padding:12px 12px 10px;}
+.genui-title{font-size:10px;letter-spacing:1.3px;color:var(--gold);margin-bottom:9px;text-transform:uppercase;}
+.genui-note{font-size:var(--fs-1);color:var(--text-3);margin-top:8px;letter-spacing:0.2px;}
+
+/* timeline */
+.gl-tl{position:relative;padding-left:18px;}
+.gl-tl-spine{position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:linear-gradient(var(--gold),var(--border));opacity:0.5;border-radius:2px;}
+.gl-tl-item{position:relative;padding:0 0 12px 0;}
+.gl-tl-item:last-child{padding-bottom:0;}
+.gl-tl-dot{position:absolute;left:-17px;top:4px;width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);}
+.gl-tl-when{font-size:var(--fs-2);color:var(--gold);letter-spacing:0.4px;}
+.gl-tl-what{font-size:var(--fs-3);color:var(--text-2);line-height:1.5;margin-top:2px;}
+.gl-tl-ref{font-size:var(--fs-1);color:var(--text-3);margin-top:3px;}
+
+/* stats */
+.gl-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;}
+.gl-stat{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;}
+.gl-stat-v{font-size:var(--fs-5);color:var(--gold);line-height:1.15;}
+.gl-stat-l{font-size:var(--fs-1);color:var(--text-3);margin-top:4px;letter-spacing:0.3px;}
+
+/* comparison table */
+.gl-cmp{width:100%;border-collapse:collapse;font-size:var(--fs-2);}
+.gl-cmp th{text-align:left;padding:7px 8px;color:var(--gold);border-bottom:1px solid var(--border-med);font-weight:600;letter-spacing:0.3px;}
+.gl-cmp td{padding:7px 8px;color:var(--text-2);border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+.gl-cmp tr:last-child td{border-bottom:none;}
+
+/* scripture cards */
+.gl-verse{border-left:3px solid var(--gold);background:var(--bg);border-radius:0 10px 10px 0;padding:9px 10px;margin-bottom:8px;}
+.gl-verse:last-child{margin-bottom:0;}
+.gl-verse-ref{font-size:var(--fs-2);color:var(--gold);letter-spacing:0.4px;}
+.gl-verse-txt{font-size:var(--fs-3);color:var(--text-2);line-height:1.6;margin-top:4px;}
+.gl-go{margin-top:7px;font-size:var(--fs-1);color:var(--gold);background:var(--gold-dim);border:1px solid var(--border-med);border-radius:7px;padding:4px 9px;min-height:30px;}
+
+/* chart */
+.gl-chart{width:100%;height:132px;display:block;overflow:visible;}
+.gl-bar{fill:var(--gold);opacity:0.85;transform-origin:bottom;animation:glGrow 0.5s cubic-bezier(.2,.8,.3,1) backwards;}
+.gl-ax{font-size:9px;fill:var(--text-3);}
+.gl-val{font-size:9px;fill:var(--gold);}
+@keyframes glGrow{from{transform:scaleY(0);}to{transform:scaleY(1);}}
+
+/* diagram / flow */
+.gl-flow{display:flex;flex-direction:column;gap:6px;}
+.gl-step{display:flex;gap:9px;align-items:flex-start;}
+.gl-step-n{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--gold);color:var(--gold);font-size:10px;display:flex;align-items:center;justify-content:center;}
+.gl-step-b{flex:1;}
+.gl-step-l{font-size:var(--fs-3);color:var(--text-2);}
+.gl-step-d{font-size:var(--fs-1);color:var(--text-3);margin-top:2px;line-height:1.45;}
+
+/* places — a schematic plot, never a fake map */
+.gl-place{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.gl-place:last-child{border-bottom:none;}
+.gl-place-n{font-size:var(--fs-3);color:var(--text-2);}
+.gl-place-d{font-size:var(--fs-1);color:var(--text-3);margin-top:2px;line-height:1.45;}
+.gl-place-k{font-size:var(--fs-1);color:var(--gold);white-space:nowrap;}
+
+/* people */
+.gl-person{padding:8px 0;border-bottom:1px solid var(--border);}
+.gl-person:last-child{border-bottom:none;}
+.gl-person-n{font-size:var(--fs-3);color:var(--text-2);}
+.gl-person-r{font-size:var(--fs-1);color:var(--gold);letter-spacing:0.3px;margin-top:1px;}
+.gl-person-d{font-size:var(--fs-1);color:var(--text-3);margin-top:3px;line-height:1.5;}
+
+/* accordion (depth on demand) */
+.gl-acc{border:1px solid var(--border);border-radius:9px;margin-bottom:6px;overflow:hidden;}
+.gl-acc:last-child{margin-bottom:0;}
+.gl-acc-h{width:100%;text-align:left;padding:10px;font-size:var(--fs-2);color:var(--text-2);display:flex;justify-content:space-between;gap:8px;min-height:40px;align-items:center;}
+.gl-acc-h .gl-caret{color:var(--gold);transition:transform 0.2s ease;}
+.gl-acc.on .gl-acc-h .gl-caret{transform:rotate(90deg);}
+.gl-acc-b{display:none;padding:0 10px 10px;font-size:var(--fs-2);color:var(--text-3);line-height:1.6;}
+.gl-acc.on .gl-acc-b{display:block;}
+
+/* follow-up questions */
+.gl-fu{width:100%;text-align:left;padding:10px 11px;background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;margin-bottom:6px;min-height:44px;}
+.gl-fu:last-child{margin-bottom:0;}
+.gl-fu-q{font-size:var(--fs-2);color:var(--text-2);line-height:1.45;}
+.gl-fu-l{font-size:var(--fs-1);color:var(--text-3);margin-top:3px;}
+
+
 /* ── iOS web-app polish (Safari / installed Home Screen app only) ───────────────
    The @supports test below is true on iOS Safari and WKWebView, false on Android
    Chrome and desktop Chromium — so nothing in this block can change the APK's
@@ -7675,7 +7760,7 @@ async function sendChat(){
     // Single fast path: light reasoning when it fits the 3s first-token budget,
     // instant no-think fallback otherwise. Tight context, direct prompt.
     const msgs=chatHistory.slice(-6);
-    const sys=CHAT_SYS+'\nThink briefly if helpful, then answer completely and directly.';
+    const sys=CHAT_SYS+GENUI_SYS+'\nThink briefly if helpful, then answer completely and directly.';
     let fullReply='';
     // Paint coalescing. The old callback ran the entire markdown pipeline over the GROWING
     // answer and rewrote the bubble on every chunk — roughly O(n^2) main-thread work, and a
@@ -7698,7 +7783,9 @@ async function sendChat(){
       await callAI(msgs,sys,chunk=>{
         fullReply+=chunk;
         paintSoon();
-      },2048,chatModel(),null,45000,true,reasoningBudget(raw));
+      // 3000, not 2048: an answer that also carries a genui spec spends tokens on the component
+    // block, and a spec cut off mid-JSON renders nothing at all.
+    },3000,chatModel(),null,45000,true,reasoningBudget(raw));
     }finally{
       // Flush before anything appends into the bubble: a late timer would otherwise rewrite
       // innerHTML over the save/deeper controls that get added next.
@@ -7708,8 +7795,13 @@ async function sendChat(){
     if(!fullReply.trim()){
       typingEl.querySelector('.chat-bubble').textContent = 'No response received — the model returned empty. Check provider, model name, and balance in Settings.';
     } else {
-      chatHistory.push({role:'assistant', content:fullReply});
-      try{attachDeeperControls(typingEl, fullReply);}catch(_){}
+      // Everything downstream works on the PROSE: the genui spec is a rendering instruction,
+      // not conversation, so it never re-enters the history (which would re-send it every turn).
+      const parsedReply=parseGenUI(fullReply);
+      const proseReply=parsedReply.prose||fullReply;
+      chatHistory.push({role:'assistant', content:proseReply});
+      try{attachGenUI(typingEl, fullReply);}catch(_){}
+      try{attachDeeperControls(typingEl, proseReply);}catch(_){}
       // Add save-to-notes button after streaming finishes
       (function(){
         var bubble=typingEl.querySelector('.chat-bubble');
@@ -7989,6 +8081,334 @@ function studyDeepenInAsk(mode){
 }
 
 try{wireChatComposer();}catch(_){}
+
+// The visual-layer contract. Kept as its own constant rather than inline in CHAT_SYS so the
+// vocabulary is reviewable in one place (the STUDY_SYS map is organised the same way).
+const GENUI_SYS = `
+VISUAL LAYER — optional, and worth using when a picture teaches better than prose.
+After your answer you MAY add ONE fenced block that opens with a line of three backticks
+followed by genui, containing JSON. It must come LAST and must be valid JSON:
+  {"components":[ ...up to 4... ]}
+Available component types — use ONLY these, and only their fields:
+- timeline: {"type":"timeline","title":"","items":[{"when":"AD 52","what":"","ref":"Acts 18:19"}]}
+- stats:    {"type":"stats","title":"","items":[{"value":"3 years","label":"time in Ephesus"}]}
+- compare:  {"type":"compare","title":"","columns":["Ephesian culture","Paul's teaching"],"rows":[["Artemis cult","One God"]]}
+- verses:   {"type":"verses","title":"","items":[{"ref":"Acts 19:10","text":"the verse text"}]}
+- chart:    {"type":"chart","title":"","series":[{"label":"","unit":"","points":[{"x":"AD 52","y":3}]}]}
+- diagram:  {"type":"diagram","title":"","steps":[{"label":"They hear","detail":"one line"}]}
+- places:   {"type":"places","title":"","items":[{"name":"Ephesus","note":"","distance":"80 km from Miletus"}]}
+- people:   {"type":"people","title":"","items":[{"name":"Aquila","role":"tentmaker","note":"","ref":"Acts 18:2"}]}
+- accordion:{"type":"accordion","title":"","items":[{"heading":"","body":"the deeper detail"}]}
+- followups:{"type":"followups","title":"","items":[{"q":"a complete question the reader might ask next","label":"why it matters"}]}
+RULES
+1. Use a component only when it genuinely teaches something the prose cannot. Never pad, never
+   decorate: if nothing qualifies, omit the block entirely.
+2. The prose must stand on its own. The block carries structure, never the answer itself.
+3. Never invent coordinates, images, dates, distances, quotations or citations you were not
+   given. Leave a field out rather than guessing it.
+4. Prefer these when they fit: a timeline for anything chronological, compare for contrasts,
+   verses for the Scriptures under discussion, stats for numbers, accordion for depth the reader
+   may not want yet, followups for where to go next.
+5. Every string is plain text — no markdown, no HTML inside the JSON.
+`;
+
+
+// ══ GENUI ENGINE — approved components in Ask answers ═══════════════════════════════
+// The model returns its prose plus a fenced ```genui block naming components and their data.
+// The app validates that against the allowlist below and renders it. Three rules hold this
+// together:
+//   1. Model-authored code is NEVER executed — the model selects from named component types.
+//   2. Model strings NEVER become markup — every one goes in through textContent, so a hostile
+//      answer cannot inject HTML into the page (the app runs with 'unsafe-inline' already).
+//   3. Nothing is invented on our side: no images, no coordinates, no citations we were not
+//      given. A component that cannot be built from the supplied data is dropped, not faked.
+// Ask only — Study keeps its own fixed section layout.
+const GENUI_LIMITS={components:4,items:10,str:280,label:60,head:90};
+
+function genuiClip(s,n){s=String(s==null?'':s).trim();return s.length>n?s.slice(0,n-1)+'\u2026':s;}
+function genuiStr(v,n){return genuiClip(v,n||GENUI_LIMITS.str);}
+function genuiArr(v,n){return Array.isArray(v)?v.slice(0,n||GENUI_LIMITS.items):[];}
+function genuiEl(tag,cls,txt){
+  const e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(txt!==undefined&&txt!==null)e.textContent=txt;
+  return e;
+}
+function genuiSvg(tag,attrs){
+  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs)e.setAttribute(k,attrs[k]);
+  return e;
+}
+
+// ── parse: prose out, spec out. Tolerates a fence the model never closed (max_tokens cuts). ──
+function parseGenUI(text){
+  const t=String(text||'');
+  const open=t.search(/```genui/i);
+  if(open===-1)return {prose:t,spec:null};
+  const after=t.slice(open);
+  const fenceEnd=after.indexOf('\n');
+  let body=after.slice(fenceEnd===-1?0:fenceEnd+1);
+  const close=body.indexOf('```');
+  if(close!==-1)body=body.slice(0,close);
+  const prose=(t.slice(0,open)+t.slice(open+ (fenceEnd===-1?after.length:fenceEnd+1) + body.length + (close===-1?0:3)))
+    .replace(/\n{3,}/g,'\n\n').trim();
+  let raw=null;
+  try{raw=JSON.parse(body.trim());}
+  catch(_){
+    // truncated JSON: keep the largest balanced prefix
+    const last=body.lastIndexOf('}');
+    if(last!==-1){try{raw=JSON.parse(body.slice(0,last+1)+']}');}catch(__){raw=null;}}
+  }
+  return {prose:prose,spec:raw};
+}
+
+// ── component builders (each returns an element, or null when the data cannot support it) ──
+function glTimeline(c,title){
+  const items=genuiArr(c.items).map(function(it){return it&&typeof it==='object'?it:null;}).filter(Boolean);
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Timeline'));
+  const tl=genuiEl('div','gl-tl');
+  tl.appendChild(genuiEl('div','gl-tl-spine'));
+  items.forEach(function(it){
+    const row=genuiEl('div','gl-tl-item');
+    row.appendChild(genuiEl('div','gl-tl-dot'));
+    row.appendChild(genuiEl('div','gl-tl-when',genuiStr(it.when||it.date,60)));
+    row.appendChild(genuiEl('div','gl-tl-what',genuiStr(it.what||it.event)));
+    if(it.ref)row.appendChild(genuiEl('div','gl-tl-ref',genuiStr(it.ref,60)));
+    tl.appendChild(row);
+  });
+  box.appendChild(tl);
+  return box;
+}
+
+function glStats(c,title){
+  const items=genuiArr(c.items).filter(function(it){return it&&typeof it==='object'&&(it.value||it.label);});
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'At a glance'));
+  const grid=genuiEl('div','gl-stats');
+  items.forEach(function(it){
+    const cell=genuiEl('div','gl-stat');
+    cell.appendChild(genuiEl('div','gl-stat-v',genuiStr(it.value,24)));
+    cell.appendChild(genuiEl('div','gl-stat-l',genuiStr(it.label,60)));
+    grid.appendChild(cell);
+  });
+  box.appendChild(grid);
+  return box;
+}
+
+function glCompare(c,title){
+  const cols=genuiArr(c.columns,4).map(function(x){return genuiStr(x,60);}).filter(Boolean);
+  const rows=genuiArr(c.rows).filter(Array.isArray);
+  if(cols.length<2||!rows.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Comparison'));
+  const tbl=genuiEl('table','gl-cmp');
+  const thead=genuiEl('thead'), htr=genuiEl('tr');
+  cols.forEach(function(x){htr.appendChild(genuiEl('th',null,x));});
+  thead.appendChild(htr);tbl.appendChild(thead);
+  const tb=genuiEl('tbody');
+  rows.forEach(function(r){
+    const tr=genuiEl('tr');
+    cols.forEach(function(_,i){tr.appendChild(genuiEl('td',null,genuiStr(r[i])));});
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb);box.appendChild(tbl);
+  return box;
+}
+
+function glVerses(c,title){
+  const items=genuiArr(c.items).filter(function(it){return it&&typeof it==='object'&&(it.ref||it.text);});
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Scripture'));
+  items.forEach(function(it){
+    const card=genuiEl('div','gl-verse');
+    if(it.ref)card.appendChild(genuiEl('div','gl-verse-ref',genuiStr(it.ref,60)));
+    if(it.text)card.appendChild(genuiEl('div','gl-verse-txt',genuiStr(it.text,400)));
+    if(it.ref&&typeof parseRef==='function'){
+      const p=parseRef(it.ref);
+      if(p){
+        const b=genuiEl('button','gl-go','\u2192 Read in the Bible');
+        b.type='button';
+        b.onclick=function(){
+          closeStudyPanel(false);
+          if(typeof pickVerseAndRead==='function')pickVerseAndRead(p.idx,p.ch,p.vs||1);
+          else{go('read');if(typeof goToVerse==='function')goToVerse(p.idx,p.ch,p.vs||1);}
+        };
+        card.appendChild(b);
+      }
+    }
+    box.appendChild(card);
+  });
+  return box;
+}
+
+function glChart(c,title){
+  const series=genuiArr(c.series,3).filter(function(s){return s&&typeof s==='object';});
+  const pts=series.length&&Array.isArray(series[0].points)?series[0].points.filter(function(p){return p&&isFinite(parseFloat(p.y));}):[];
+  if(!pts.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||genuiStr(series[0].label,70)||'Chart'));
+  const W=280,H=112,pad=16,bw=Math.min(30,(W-pad*2)/pts.length-8);
+  const max=Math.max.apply(null,pts.map(function(p){return parseFloat(p.y);}))||1;
+  const svg=genuiSvg('svg',{class:'gl-chart',viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'none',role:'img'});
+  svg.appendChild(genuiSvg('line',{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:'var(--border)',"stroke-width":1}));
+  pts.forEach(function(p,i){
+    const v=parseFloat(p.y), h=Math.max(2,(v/max)*(H-pad*2.2));
+    const x=pad+i*((W-pad*2)/pts.length)+((W-pad*2)/pts.length-bw)/2;
+    const r=genuiSvg('rect',{class:'gl-bar',x:x,y:H-pad-h,width:bw,height:h,rx:3,style:'animation-delay:'+(i*70)+'ms'});
+    svg.appendChild(r);
+    const val=genuiSvg('text',{class:'gl-val',x:x+bw/2,y:H-pad-h-4,'text-anchor':'middle'});
+    val.textContent=genuiClip(p.y,10);svg.appendChild(val);
+    const ax=genuiSvg('text',{class:'gl-ax',x:x+bw/2,y:H-pad+11,'text-anchor':'middle'});
+    ax.textContent=genuiClip(p.x,10);svg.appendChild(ax);
+  });
+  box.appendChild(svg);
+  if(series[0].unit)box.appendChild(genuiEl('div','genui-note',genuiStr(series[0].unit,60)));
+  return box;
+}
+
+function glFlow(c,title){
+  const steps=genuiArr(c.steps).filter(function(s){return s&&typeof s==='object'&&(s.label||s.step);});
+  if(steps.length<2)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'How it flows'));
+  const flow=genuiEl('div','gl-flow');
+  steps.forEach(function(s,i){
+    const row=genuiEl('div','gl-step');
+    row.appendChild(genuiEl('div','gl-step-n',String(i+1)));
+    const b=genuiEl('div','gl-step-b');
+    b.appendChild(genuiEl('div','gl-step-l',genuiStr(s.label||s.step,90)));
+    if(s.detail)b.appendChild(genuiEl('div','gl-step-d',genuiStr(s.detail)));
+    row.appendChild(b);flow.appendChild(row);
+  });
+  box.appendChild(flow);
+  return box;
+}
+
+function glPlaces(c,title){
+  const items=genuiArr(c.items).filter(function(it){return it&&typeof it==='object'&&(it.name||it.place);});
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Places'));
+  items.forEach(function(it){
+    const row=genuiEl('div','gl-place');
+    const left=genuiEl('div');
+    left.appendChild(genuiEl('div','gl-place-n',genuiStr(it.name||it.place,70)));
+    if(it.note)left.appendChild(genuiEl('div','gl-place-d',genuiStr(it.note)));
+    row.appendChild(left);
+    if(it.distance)row.appendChild(genuiEl('div','gl-place-k',genuiStr(it.distance,40)));
+    box.appendChild(row);
+  });
+  // Honest labelling: this is a relationship list, not a projected map. Drawing coastlines we
+  // were not given would be inventing geography.
+  box.appendChild(genuiEl('div','genui-note','Positions are relative, from the text \u2014 not a projected map.'));
+  return box;
+}
+
+function glPeople(c,title){
+  const items=genuiArr(c.items).filter(function(it){return it&&typeof it==='object'&&(it.name||it.person);});
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'People'));
+  items.forEach(function(it){
+    const row=genuiEl('div','gl-person');
+    row.appendChild(genuiEl('div','gl-person-n',genuiStr(it.name||it.person,70)));
+    if(it.role)row.appendChild(genuiEl('div','gl-person-r',genuiStr(it.role,80)));
+    if(it.note)row.appendChild(genuiEl('div','gl-person-d',genuiStr(it.note)));
+    if(it.ref)row.appendChild(genuiEl('div','gl-tl-ref',genuiStr(it.ref,60)));
+    box.appendChild(row);
+  });
+  return box;
+}
+
+function glAccordion(c,title){
+  const items=genuiArr(c.items).filter(function(it){return it&&typeof it==='object'&&(it.heading||it.title);});
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Go deeper'));
+  items.forEach(function(it){
+    const wrap=genuiEl('div','gl-acc');
+    const h=genuiEl('button','gl-acc-h');
+    h.type='button';
+    h.appendChild(genuiEl('span',null,genuiStr(it.heading||it.title,90)));
+    h.appendChild(genuiEl('span','gl-caret','\u203a'));
+    const b=genuiEl('div','gl-acc-b',genuiStr(it.body||it.text,900));
+    h.onclick=function(){wrap.classList.toggle('on');};
+    wrap.appendChild(h);wrap.appendChild(b);box.appendChild(wrap);
+  });
+  return box;
+}
+
+function glFollowups(c,title){
+  const items=genuiArr(c.items,6).filter(function(it){return it&&typeof it==='object'&&(it.q||it.question);});
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Where to go next'));
+  const wrap=genuiEl('div');
+  items.forEach(function(it){
+    const q=genuiStr(it.q||it.question,200);
+    const b=genuiEl('button','gl-fu');
+    b.type='button';
+    b.appendChild(genuiEl('div','gl-fu-q',q));
+    if(it.label)b.appendChild(genuiEl('div','gl-fu-l',genuiStr(it.label,80)));
+    b.onclick=function(){ askFollowUp('[Continuing \u2014 the reader tapped a suggested follow-up]', q); };
+    wrap.appendChild(b);
+  });
+  box.appendChild(wrap);
+  return box;
+}
+
+const GENUI_BUILDERS={
+  timeline:glTimeline, stats:glStats, compare:glCompare, verses:glVerses, chart:glChart,
+  diagram:glFlow, flow:glFlow, places:glPlaces, people:glPeople, accordion:glAccordion,
+  followups:glFollowups, questions:glFollowups
+};
+
+function sanitizeGenUI(raw){
+  const out=[];
+  if(!raw||typeof raw!=='object')return out;
+  genuiArr(raw.components,GENUI_LIMITS.components).forEach(function(c){
+    if(!c||typeof c!=='object')return;
+    const type=String(c.type||'').toLowerCase().trim();
+    const build=GENUI_BUILDERS[type];
+    if(!build)return;                                   // unknown type: dropped, never guessed
+    const title=genuiStr(c.title,GENUI_LIMITS.head);
+    let el=null;
+    try{el=build(c,title);}catch(_){el=null;}
+    if(el)out.push(el);
+  });
+  return out;
+}
+
+function renderGenUI(comps){
+  const wrap=genuiEl('div','genui');
+  comps.forEach(function(c){wrap.appendChild(c);});
+  return wrap;
+}
+
+// Called once an answer finishes. Repaints the prose WITHOUT the spec block, then attaches the
+// components — so it must run before anything else appends into the bubble.
+function attachGenUI(el,text){
+  const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
+  if(!bubble)return 0;
+  const parsed=parseGenUI(text);
+  if(!parsed.spec)return 0;
+  const comps=sanitizeGenUI(parsed.spec);
+  if(!comps.length)return 0;
+  // Safe: formatChatReply escapes &, < and > BEFORE applying its own markup, so model text can
+  // never become tags here. Component content never passes through innerHTML at all — it is
+  // built with createElement/textContent.
+  // Safe: formatChatReply escapes &, < and > BEFORE applying its own markup, so model text
+  // cannot become tags here. Component content does not pass through innerHTML at all — it is
+  // built with createElement/textContent.
+  bubble.innerHTML=formatChatReply(parsed.prose);
+  bubble.appendChild(renderGenUI(comps));
+  return comps.length;
+}
+
 
 
 

@@ -1091,6 +1091,8 @@ img{ -webkit-user-drag:none; }
    directions to continue, tapping one sends it as the next turn. Kept out of Study,
    where the bridge below does the same job from a study answer. */
 .chat-deeper{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.chat-deeper-head{font-size:10px;color:var(--text-3);letter-spacing:1.4px;margin-bottom:6px;}
+.chat-deeper-loading{font-size:var(--fs-2);color:var(--text-3);padding:8px 0;opacity:0.85;}
 .chat-deeper-btn{font-size:11px;color:var(--gold);padding:4px 10px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:8px;cursor:pointer;min-height:36px;letter-spacing:0.3px;}
 .chat-deeper-btn:disabled{opacity:0.6;cursor:default;}
 .chat-deeper-opts{display:none;flex-direction:column;gap:6px;margin-top:8px;}
@@ -1282,7 +1284,7 @@ img{ -webkit-user-drag:none; }
     <button onclick="clearChat()" style="font-size:13px;color:var(--text-3);padding:6px 10px;min-height:44px;flex-shrink:0;">Clear</button>
   </div>
   <div id="chat-context-bar" style="display:none;margin:0 16px 8px;padding:10px 14px;background:var(--elev);border-radius:10px;border-left:3px solid var(--gold);font-size:12px;color:var(--text-2);"></div>
-  <div id="chat-messages" style="padding:0 16px 16px;min-height:200px;"></div>
+  <div id="chat-messages" style="padding:0 16px 150px;min-height:200px;"></div>
   <div class="chat-quick-chips" id="chat-chips">
     <button class="chat-chip" onclick="sendQuick('Give me a full theological overview of the verse I am currently reading.')">Overview</button>
     <button class="chat-chip" onclick="sendQuick('Analyze the Hebrew and Greek depths of this passage using Pardes — the Hebrew word behind the Greek text (written in Greek, spoken in Hebrew), then Peshat, Remez, Derash, and Sod layers, plus Tense, Voice, Mood, Person, Number breakdown.')">Hebrew/Greek</button>
@@ -7666,6 +7668,7 @@ async function sendChat(){
   chatHistory.push({role:'user', content:userMsg});
   appendChatMsg('user', raw);
   const typingEl = appendTyping();
+  chatScrollToBottom();
   addXP(5);
 
   try {
@@ -7684,8 +7687,7 @@ async function sendChat(){
       paintPending=false;
       const b=typingEl.querySelector('.chat-bubble');
       if(b)b.innerHTML=formatChatReply(fullReply);
-      const m=document.getElementById('chat-messages');
-      if(m)m.scrollTop=m.scrollHeight;
+      chatScrollToBottom();
     };
     const paintSoon=function(){
       if(paintPending)return;
@@ -7739,8 +7741,7 @@ async function sendChat(){
     chatBusy=false;
   }
 
-  const msgs_el = document.getElementById('chat-messages');
-  msgs_el.scrollTop = msgs_el.scrollHeight;
+  chatScrollToBottom();
 }
 
 function formatChatReply(text){
@@ -7882,29 +7883,50 @@ function askFollowUp(context, question){
 }
 
 // ── 1. three directions under a finished Ask answer ────────────────────────────
+// The directions are fetched as soon as the answer lands, so they are already buttons by the
+// time the reader looks — no first tap to generate them. The button survives only as the
+// retry affordance if that call fails.
+function chatScrollToBottom(){
+  // `#chat-messages` is NOT a scroll container (measured: position static, scrollHeight ==
+  // clientHeight), so the old `msgs.scrollTop = msgs.scrollHeight` was a no-op and the chat
+  // never followed the answer. `.screen` is the scroller — flex:1 with overflow-y:auto.
+  const sc=document.getElementById('screen-chat');
+  if(sc)sc.scrollTop=sc.scrollHeight;
+}
 function attachDeeperControls(el, answer){
   const bubble=el.querySelector('.chat-bubble');
   if(!bubble||bubble.querySelector('.chat-deeper'))return;
   const wrap=document.createElement('div');
   wrap.className='chat-deeper';
-  const btn=document.createElement('button');
-  btn.type='button';btn.className='chat-deeper-btn';
-  btn.textContent='\u21b3 Go deeper \u2014 3 directions';
+  const head=document.createElement('div');
+  head.className='chat-deeper-head';
+  head.textContent='GO DEEPER';
   const opts=document.createElement('div');
   opts.className='chat-deeper-opts';
+  opts.style.display='flex';
+  const btn=document.createElement('button');
+  btn.type='button';btn.className='chat-deeper-btn';
+  btn.textContent='\u21b3 Retry directions';
+  btn.style.display='none';
   btn.onclick=function(){ loadDeeperOptions(wrap, answer); };
-  wrap.appendChild(btn);wrap.appendChild(opts);
+  wrap.appendChild(head);wrap.appendChild(opts);wrap.appendChild(btn);
   bubble.appendChild(wrap);
+  const loading=document.createElement('div');
+  loading.className='chat-deeper-loading';
+  loading.textContent='Finding 3 directions\u2026';
+  opts.appendChild(loading);
+  loadDeeperOptions(wrap, answer);
 }
 
 async function loadDeeperOptions(wrap, answer){
-  const btn=wrap.querySelector('.chat-deeper-btn');
   const opts=wrap.querySelector('.chat-deeper-opts');
-  const restore=btn.textContent;
-  if(opts.querySelector('.chat-deeper-chip')){ opts.style.display='flex'; btn.disabled=false; return; }
-  if(deeperBusy)return;
-  deeperBusy=true;btn.disabled=true;
-  btn.textContent='Finding 3 directions\u2026';
+  const btn=wrap.querySelector('.chat-deeper-btn');
+  if(opts.querySelector('.chat-deeper-chip'))return;      // already have them
+  opts.innerHTML='';
+  const loading=document.createElement('div');
+  loading.className='chat-deeper-loading';
+  loading.textContent='Finding 3 directions\u2026';
+  opts.appendChild(loading);
   try{
     const ref=(S.chapterData&&S.book>=0)?(ALL_BOOKS[S.book][0]+' '+S.chapter):'';
     const j=await callJSON(
@@ -7924,22 +7946,24 @@ async function loadDeeperOptions(wrap, answer){
     list.forEach(function(o,i){
       const b=document.createElement('button');
       b.type='button';b.className='chat-deeper-chip';
-      b.innerHTML='<span class="o-n">DIRECTION '+(i+1)+'</span><span class="o-t">'+chatEscDeeper(o.label||('Option '+(i+1)))+'</span>'
-        +(o.why?'<span class="o-w">'+chatEscDeeper(o.why)+'</span>':'');
+      const n=document.createElement('span');n.className='o-n';n.textContent='DIRECTION '+(i+1);
+      const t=document.createElement('span');t.className='o-t';t.textContent=String(o.label||('Option '+(i+1)));
+      b.appendChild(n);b.appendChild(t);
+      if(o.why){const w=document.createElement('span');w.className='o-w';w.textContent=String(o.why);b.appendChild(w);}
       b.onclick=function(){
         askFollowUp('[Continuing the answer above \u2014 the reader chose this direction]\nDirection: '+(o.label||'')
           +'\nWhat it should unlock: '+(o.why||''), o.prompt);
       };
       opts.appendChild(b);
     });
-    opts.style.display='flex';
-    btn.textContent='\u21b3 Pick a direction';
-    btn.disabled=false;btn.style.opacity='0.7';
+    btn.style.display='none';
+    btn.disabled=false;
   }catch(e){
-    btn.disabled=false;btn.textContent=restore;
-    toast('Could not load directions \u2014 tap to try again');
-  }finally{
-    deeperBusy=false;
+    // No directions is not an error worth a toast: leave the retry button, quietly.
+    opts.innerHTML='';
+    btn.style.display='';
+    btn.disabled=false;
+    btn.textContent='\u21b3 Could not load directions \u2014 tap to retry';
   }
 }
 

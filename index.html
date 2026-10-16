@@ -1113,6 +1113,30 @@ img{ -webkit-user-drag:none; }
 #screen-chat.chips-idle .chat-quick-chips{opacity:0;transform:translateX(-50%) translateY(14px);pointer-events:none;}
 #screen-chat.chips-idle #chat-context-bar{display:none!important;}
 
+/* ══ GENUI MEDIA: figures, attribution, before-after ═════════════════════════════════ */
+.gl-fig{margin-bottom:10px;}
+.gl-fig:last-child{margin-bottom:0;}
+.gl-fig-frame{width:100%;min-height:64px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.gl-fig-img{width:100%;height:auto;display:block;opacity:0;transition:opacity 0.35s ease;}
+.gl-fig-on .gl-fig-img{opacity:1;}
+.gl-fig-note{font-size:var(--fs-1);color:var(--text-3);padding:12px;}
+.gl-hidden{display:none;}
+.gl-fig-empty{display:none;}
+.gl-fig-cap{font-size:var(--fs-2);color:var(--text-2);line-height:1.5;margin-top:6px;}
+.gl-fig-credit{font-size:9px;color:var(--text-3);letter-spacing:0.2px;margin-top:3px;line-height:1.45;}
+.gl-fig-src{color:var(--text-3);text-decoration:underline;}
+
+.gl-cmp-img{position:relative;width:100%;aspect-ratio:4/3;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.gl-cmp-a,.gl-cmp-b{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.gl-cmp-before,.gl-cmp-after{position:absolute;inset:0;}
+.gl-cmp-before{width:50%;overflow:hidden;z-index:2;}
+.gl-cmp-before img{width:100vw;max-width:none;}
+.gl-cmp-bar{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--gold);z-index:3;box-shadow:0 0 6px rgba(0,0,0,0.4);}
+.gl-cmp-range{width:100%;margin-top:8px;accent-color:var(--gold);background:transparent;}
+.gl-cmp-labels{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-1);color:var(--text-3);margin-top:2px;}
+.gl-cmp-r{text-align:right;}
+
+
 /* ══ GENUI: interactive teaching components in Ask answers ══════════════════════════
    The model returns prose plus a heading-cased ```genui block naming components and their
    data; the app validates that against an allowlist and renders it here. Model-authored code
@@ -8023,10 +8047,14 @@ async function loadDeeperOptions(wrap, answer){
     const ref=(S.chapterData&&S.book>=0)?(ALL_BOOKS[S.book][0]+' '+S.chapter):'';
     const j=await callJSON(
       [{role:'user',content:'An answer was already given to the reader:\n"""'+String(answer).slice(0,1600)+'"""\n\n'
-        +'Give exactly 3 directions to go DEEPER on this answer, genuinely different from each other:\n'
-        +'(1) further into the SAME subject \u2014 the next layer a serious student would want;\n'
-        +'(2) an ADJACENT subject this naturally opens onto;\n'
-        +'(3) something EXPERIENTIAL or practical they can act on.\n'
+        +'Give exactly 3 directions to go DEEPER on this answer.\n'
+        +'ALL THREE must be equally intriguing areas of STUDY \u2014 the deeper layers of this subject '
+        +'itself, or the rich areas it opens onto. Never turn one of them into a devotional, a prayer '
+        +'prompt, a gratitude exercise or a daily-practice idea: the reader came here to study, so keep '
+        +'every direction exegetical, historical, linguistic, thematic or theological.\n'
+        +'Make them clearly different from each other \u2014 different angles, different questions, or '
+        +'different bodies of evidence (a word study, a background, a parallel passage, a controversy, '
+        +'a structure, a person, a place) \u2014 and each one the kind a serious student would chase next.\n'
         +'Each prompt must be a complete, self-standing question and must NOT repeat what the answer already covered.'}],
       'You are Rhema, a Bible study companion. Return ONLY JSON of the form '
         +'{"options":[{"label":"3-5 word tap label","why":"one short line on what this unlocks","prompt":"the full question to send"}]} '
@@ -8100,6 +8128,8 @@ Available component types — use ONLY these, and only their fields:
 - people:   {"type":"people","title":"","items":[{"name":"Aquila","role":"tentmaker","note":"","ref":"Acts 18:2"}]}
 - accordion:{"type":"accordion","title":"","items":[{"heading":"","body":"the deeper detail"}]}
 - followups:{"type":"followups","title":"","items":[{"q":"a complete question the reader might ask next","label":"why it matters"}]}
+- figure:   {"type":"figure","title":"","items":[{"subject":"Ephesus","caption":"one line on what is shown"}]}
+- compare-images:{"type":"compare-images","title":"Then and now","before":{"subject":"Temple of Artemis","caption":""},"after":{"subject":"Ephesus","caption":""}}
 RULES
 1. Use a component only when it genuinely teaches something the prose cannot. Never pad, never
    decorate: if nothing qualifies, omit the block entirely.
@@ -8110,6 +8140,15 @@ RULES
    verses for the Scriptures under discussion, stats for numbers, accordion for depth the reader
    may not want yet, followups for where to go next.
 5. Every string is plain text — no markdown, no HTML inside the JSON.
+6. For figure and compare-images, the subject MUST be the exact title of an existing Wikipedia
+   article — Ephesus, Ancient Corinth, Temple of Artemis, Codex Sinaiticus. NEVER write
+   a URL and never guess a title: the app looks the title up on Wikipedia and shows NOTHING when it
+   cannot resolve it, so an invented or vague subject simply loses the image. Reach for a figure
+   Reach for a figure whenever the answer concerns a real place, building, object, manuscript or
+   archaeological site — a reader studying a place should be able to SEE it, so include the most
+   important one rather than describing it. Use compare-images when the point IS the contrast
+   (then and now, two cities, two manuscripts, two witnesses). The app resolves each subject and
+   shows nothing when it cannot, so an uncertain subject costs you the image and nothing else.
 `;
 
 
@@ -8413,6 +8452,198 @@ function attachGenUI(el,text){
 
 
 // ── CROSS-REFERENCE PANEL ────────────────────────────────────────
+
+// ══ GENUI MEDIA — real, attributable images ═════════════════════════════════════════
+// The model does NOT supply image URLs. It names a Wikipedia article title; the app resolves
+// that title against the Wikimedia API and renders what actually comes back. Measured reasons
+// for this split: a model asked for a photo will invent a confident URL, and the search route
+// itself is unsafe — asking for "Ephesus Curetes Street" returned the article "Aegolius
+// (mythology)" with a cave photo. Exact-title lookup returns the requested title or nothing,
+// so a wrong picture cannot be presented as the right one.
+//
+// Fails closed: a missing article, a missing thumbnail or a failed fetch renders NOTHING. No
+// placeholder, no stock substitute. An absent figure is honest; a mislabelled one teaches a lie.
+const WIKI_TTL=30*24*3600*1000;
+const WIKI_UA='rhema-app (Bible study; educational use)';
+
+function wikiCacheGet(key){
+  try{
+    const raw=load('cx_wiki_'+key,null);
+    if(raw&&raw.ts&&(Date.now()-raw.ts)<WIKI_TTL)return raw;
+  }catch(_){}
+  return null;
+}
+function wikiCacheSet(key,val){
+  try{
+    val.ts=Date.now();
+    store('cx_wiki_'+key,val);
+    // keep the media cache from becoming the whole localStorage budget
+    const keys=Object.keys(localStorage).filter(function(k){return k.indexOf('cx_wiki_')===0;});
+    if(keys.length>60){
+      keys.sort(function(a,b){return ((load(a,null)||{}).ts||0)-((load(b,null)||{}).ts||0);});
+      keys.slice(0,keys.length-60).forEach(function(k){localStorage.removeItem(k);});
+    }
+  }catch(_){}
+}
+function wikiApi(params){
+  const q=Object.keys(params).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);}).join('&');
+  // origin=* is what makes the response readable from a page (ACAO: *), verified.
+  return fetch('https://en.wikipedia.org/w/api.php?format=json&origin=*&'+q,{headers:{'Api-User-Agent':WIKI_UA}})
+    .then(function(r){return r.ok?r.json():null;});
+}
+
+// Exact-title resolution. Returns {title,img,extract,coords} or null.
+async function wikiResolve(subject){
+  const key='t_'+(subject||'').toLowerCase().replace(/\s+/g,'_').slice(0,120);
+  if(!subject)return null;
+  const hit=wikiCacheGet(key);
+  if(hit)return hit.data;
+  let out=null;
+  try{
+    const d=await wikiApi({action:'query',titles:subject,prop:'pageimages|coordinates|extracts',
+      piprop:'thumbnail',pithumbsize:'800',exintro:'1',explaintext:'1',exsentences:'1',redirects:'1'});
+    const pages=(d&&d.query&&d.query.pages)||{};
+    for(const k in pages){
+      const v=pages[k];
+      if(v&&v.missing===undefined){
+        const img=(v.thumbnail||{}).source||'';
+        const co=(v.coordinates||[])[0]||null;
+        out={title:v.title||subject,img:img.split('?')[0],extract:(v.extract||'').trim(),
+             lat:co?co.lat:null,lon:co?co.lon:null,pageimage:v.pageimage||''};
+      }
+    }
+  }catch(_){out=null;}
+  wikiCacheSet(key,{data:out});
+  return out;
+}
+
+// Licence line for a resolved image. CC BY-SA requires attribution and a licence notice; a
+// church app should not skip it, so the file's own metadata is read (lazily, and cached).
+async function wikiLicence(fileName){
+  if(!fileName)return '';
+  const key='l_'+fileName.toLowerCase().slice(0,120);
+  const hit=wikiCacheGet(key);
+  if(hit)return hit.data;
+  let out='';
+  try{
+    const d=await wikiApi({action:'query',titles:'File:'+fileName,prop:'imageinfo',iiprop:'extmetadata'});
+    const pages=(d&&d.query&&d.query.pages)||{};
+    for(const k in pages){
+      const md=((pages[k]||{}).imageinfo||[{}])[0].extmetadata||{};
+      const strip=function(s){return String(s||'').replace(/<[^>]*>/g,'').trim();};
+      out=strip((md.LicenseShortName||{}).value||'');
+      const artist=strip((md.Artist||{}).value||'');
+      if(artist)out=(out?out+' \u00b7 ':'')+artist.slice(0,60);
+    }
+  }catch(_){out='';}
+  wikiCacheSet(key,{data:out});
+  return out;
+}
+
+// Lazy: a figure outside the viewport is not fetched, so images never delay the answer stream.
+const _wikiIO=('IntersectionObserver' in window)?new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(!e.isIntersecting)return;
+    _wikiIO.unobserve(e.target);
+    const fn=e.target.__wikiLoad;
+    if(fn){e.target.__wikiLoad=null;fn();}
+  });
+},{rootMargin:'200px'}):null;
+
+function wikiFigureCard(subject,caption){
+  const card=genuiEl('div','gl-fig');
+  const frame=genuiEl('div','gl-fig-frame');
+  const note=genuiEl('div','gl-fig-note','Loading image\u2026');
+  frame.appendChild(note);
+  card.appendChild(frame);
+  if(caption)card.appendChild(genuiEl('div','gl-fig-cap',genuiStr(caption,200)));
+  const credit=genuiEl('div','gl-fig-credit');
+  card.appendChild(credit);
+  const load=async function(){
+    const r=await wikiResolve(subject);
+    if(!r||!r.img){frame.remove();note.remove();card.classList.add('gl-fig-empty');return;}
+    const img=document.createElement('img');
+    img.className='gl-fig-img';
+    img.loading='lazy';img.decoding='async';img.alt=genuiStr(caption||r.title,120);
+    img.onerror=function(){frame.remove();};          // broken image = show nothing, not a gap
+    img.onload=function(){card.classList.add('gl-fig-on');};
+    img.src=r.img;
+    frame.appendChild(img);
+    note.classList.add('gl-hidden');
+    const link=document.createElement('a');
+    link.className='gl-fig-src';link.target='_blank';link.rel='noopener';
+    link.href='https://en.wikipedia.org/wiki/'+encodeURIComponent(r.title.replace(/ /g,'_'));
+    link.textContent='Wikipedia \u00b7 '+genuiStr(r.title,60);
+    credit.appendChild(link);
+    const lic=await wikiLicence(r.pageimage);
+    credit.appendChild(document.createTextNode(' \u00b7 '+(lic||'Wikimedia Commons \u2014 see article for licence')));
+    if(!caption&&r.extract)card.insertBefore(genuiEl('div','gl-fig-cap',genuiStr(r.extract,200)),credit);
+  };
+  if(_wikiIO){card.__wikiLoad=load;_wikiIO.observe(card);}else{load();}
+  return card;
+}
+
+function glFigure(c,title){
+  const items=genuiArr(c.items,4).filter(function(it){return it&&typeof it==='object'&&(it.subject||it.title);});
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Images'));
+  items.forEach(function(it){box.appendChild(wikiFigureCard(genuiStr(it.subject||it.title,80),genuiStr(it.caption,200)));});
+  return box;
+}
+
+// Before/after slider: two resolved images with a draggable divider. The slider is a range
+// input so it works with touch, keyboard and screen readers rather than a bespoke drag handler.
+function glCompareImages(c,title){
+  const b=c.before||{},a=c.after||{};
+  if(!(b.subject||b.title)||!(a.subject||a.title))return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Then and now'));
+  const stage=genuiEl('div','gl-cmp-img');
+  const afterWrap=genuiEl('div','gl-cmp-after');
+  const beforeImg=document.createElement('img');beforeImg.className='gl-cmp-b';beforeImg.alt=genuiStr(b.caption||b.subject,120);
+  const afterImg=document.createElement('img');afterImg.className='gl-cmp-a';afterImg.alt=genuiStr(a.caption||a.subject,120);
+  afterWrap.appendChild(afterImg);
+  const beforeWrap=genuiEl('div','gl-cmp-before');beforeWrap.appendChild(beforeImg);
+  const bar=genuiEl('div','gl-cmp-bar');
+  stage.appendChild(afterWrap);stage.appendChild(beforeWrap);stage.appendChild(bar);
+  const range=document.createElement('input');
+  range.type='range';range.min='0';range.max='100';range.value='50';
+  range.className='gl-cmp-range';range.setAttribute('aria-label','Compare the two images');
+  const apply=function(){
+    const v=range.value+'%';
+    beforeWrap.style.width=v;bar.style.left=v;
+  };
+  range.oninput=apply;
+  box.appendChild(stage);box.appendChild(range);
+  const labels=genuiEl('div','gl-cmp-labels');
+  labels.appendChild(genuiEl('span',null,genuiStr(b.caption||b.subject,60)));
+  labels.appendChild(genuiEl('span','gl-cmp-r',genuiStr(a.caption||a.subject,60)));
+  box.appendChild(labels);
+  const credit=genuiEl('div','gl-fig-credit');
+  box.appendChild(credit);
+  (async function(){
+    const rb=await wikiResolve(b.subject||b.title);
+    const ra=await wikiResolve(a.subject||a.title);
+    if(!rb||!rb.img||!ra||!ra.img){
+      stage.remove();range.remove();labels.remove();
+      box.appendChild(genuiEl('div','genui-note','Could not resolve both images \u2014 nothing shown rather than something wrong.'));
+      return;
+    }
+    beforeImg.src=rb.img;afterImg.src=ra.img;
+    const lb=await wikiLicence(rb.pageimage);
+    credit.textContent='Wikipedia \u00b7 '+rb.title+' / '+ra.title+(lb?' \u00b7 '+lb:' \u00b7 Wikimedia Commons');
+    apply();
+  })();
+  return box;
+}
+
+GENUI_BUILDERS.figure=glFigure;
+GENUI_BUILDERS.images=glFigure;
+GENUI_BUILDERS.photos=glFigure;
+GENUI_BUILDERS['compare-images']=glCompareImages;
+GENUI_BUILDERS.thennow=glCompareImages;
+
 const XREF_SYS = `You are a careful student of Scripture, drawing from the Treasury of Scripture Knowledge tradition of biblical cross-referencing. Return ONLY a JSON array, no other text.
 Format: [{"ref":"Book Chapter:Verse","connection":"one sentence on the thematic/typological/linguistic link"}]
 Return 6-8 of the strongest cross-references, ordered by strength.`;

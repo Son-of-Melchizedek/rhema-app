@@ -7906,7 +7906,12 @@ async function sendChat(){
       const parsedReply=parseGenUI(fullReply);
       const proseReply=parsedReply.prose||fullReply;
       chatHistory.push({role:'assistant', content:proseReply});
-      try{genuiEnsure(typingEl, proseReply, fullReply);}catch(_){}   // never ship a visual-less answer
+      // Chained: the picture check must run AFTER the block lands, so it can see what is already there.
+      Promise.resolve()
+        .then(function(){return genuiEnsure(typingEl, proseReply, fullReply);})   // never ship a visual-less answer
+        .then(function(){return new Promise(function(r){setTimeout(r,1800);});})   // let the directions call finish first
+        .then(function(){try{genuiEnsurePicture(typingEl, proseReply);}catch(_){}})
+        .catch(function(){});
       try{attachDeeperControls(typingEl, proseReply);}catch(_){}
       // Add save-to-notes button after streaming finishes
       (function(){
@@ -8291,9 +8296,14 @@ RULES
    - a person named in the passage (Timothy, Onesimus, Phoebe, Priscilla and Aquila);
    - an object, plant, animal, coin, building or site the passage turns on (Crown of thorns,
      Denarius, Mustard seed, Areopagus, Temple of Artemis).
-   Give each as its exact Wikipedia article title. If your block has no figure and no map, ask
-   yourself whether the reader is being told about something they could have been shown \u2014 and if
-   so, show it. A Scripture study without a single picture or diagram is an incomplete answer.
+   Give each as its exact Wikipedia article title, and give TWO items whenever you are not certain the
+   first one resolves. Measured failure to avoid: abstract doctrinal titles frequently have NO image at
+   all ("Luther Bible" has none, "Holiness" redirects to a page with none), so an answer built around a
+   doctrine should picture something CONCRETE inside it instead \u2014 a person named, a place, a
+   manuscript, a coin, a building, an object the passage turns on. Concrete things resolve; abstractions
+   do not. If your block has no figure and no map, ask yourself whether the reader is being told about
+   something they could have been shown \u2014 and if so, show it. A Scripture study without a single
+   picture or diagram is an incomplete answer.
    Only when NONE of those triggers applies should you fall back to accordion (depth the reader can
    open). Never invent facts, numbers or places to fill the block: an accordion is always better than
    a made-up chart.
@@ -8657,7 +8667,7 @@ function genuiNormalizeSpec(o){
 
 async function genuiEnsure(el,prose,full){
   let n=0;
-  try{n=attachGenUI(el,full);}catch(_){n=0;}
+  try{n=attachGenUI(el,full,true);}catch(_){n=0;}   // noRepaint: never wipe the controls
   if(n)return n;
   const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
   if(!bubble||!prose)return 0;
@@ -8691,13 +8701,89 @@ async function genuiEnsure(el,prose,full){
   return 0;
 }
 
-function attachGenUI(el,text){
+// ── pictures, guaranteed rather than hoped for ──────────────────────────────────────
+// Measured: told to include a picture, the model did so in only 1 of 5 answers (the prompt asks, it
+// is free to decline). So the app checks and, when an answer's block has neither a figure nor a map,
+// asks for exactly one. Resolution still fails closed — an unresolvable subject shows nothing rather
+// than a wrong image.
+function genuiIsPictureEl(el){
+  return !!(el&&el.classList&&(el.classList.contains('gl-fig')||el.classList.contains('gl-map')));
+}
+async function genuiEnsurePicture(el,prose){
+  const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
+  if(!bubble)return 0;
+  if(bubble.querySelector('.gl-fig, .gl-map'))return 0;          // it already has one
+  const txt=String(prose||'').trim();
+  if(txt.length<40||/^No response received/i.test(txt))return 0;
+  let wrap=bubble.querySelector('.genui');
+  let pend=null;
+  if(wrap){
+    pend=genuiEl('div','gl-pending');
+    pend.appendChild(genuiEl('span','gl-pending-dot',''));
+    pend.appendChild(genuiEl('span',null,'Adding a picture\u2026'));
+    wrap.insertBefore(pend,wrap.firstChild);
+  }
+  const clearPend=function(){if(pend&&pend.parentNode)pend.remove();};
+  try{
+    const j=await callJSON(
+      [{role:'user',content:'An answer a reader just received:\n"""'+txt.slice(0,2000)+'"""\n\nName ONE picture that would let a reader SEE this answer.'}],
+      GENUI_SYS+'\nReturn ONLY the JSON object {"components":[ ...one figure, or one map if the answer spans more '
+      +'than one place... ]} and nothing else. Put TWO OR THREE items in the figure, most relevant first: '
+      +'each subject must be the exact title of an existing Wikipedia article for something CONCRETE this '
+      +'answer actually concerns \u2014 a person named in it, a place, a manuscript or artefact witness, a coin, '
+      +'a building, an object the passage turns on. Concrete subjects resolve; abstract doctrinal titles usually '
+      +'have no image at all. The app keeps whichever ones resolve and drops the rest, so give candidates. Never '
+      +'invent a title and never describe an image you have not identified. No prose.',
+      {maxTokens:400,timeoutMs:25000});
+    let comps=sanitizeGenUI(genuiNormalizeSpec(j)).filter(genuiIsPictureEl).slice(0,1);
+    clearPend();
+    // Last resort, app-side: if none of the model's subjects has an image, picture the BOOK being
+    // studied (e.g. Ephesians -> "Epistle to the Ephesians", which resolves). It is accurate and
+    // clearly labelled, and it means a passage study is not left without a picture because the
+    // model named something abstract.
+    if(comps.length){
+      const items=comps[0].querySelectorAll('.gl-fig');
+      let ok=false;
+      for(let i=0;i<items.length;i++){
+        const probe=await wikiResolve((items[i].dataset.subject||''));
+        if(probe&&probe.img){ok=true;break;}
+      }
+      if(!ok&&typeof S!=='undefined'&&S.book>=0&&ALL_BOOKS[S.book]){
+        const bookName=ALL_BOOKS[S.book][0];
+        const asBook='Epistle to the '+bookName;
+        const cand=[asBook,'Book of '+bookName,bookName];
+        for(let i=0;i<cand.length;i++){
+          const r2=await wikiResolve(cand[i]);
+          if(r2&&r2.img){
+            comps=[glFigure({items:[{subject:cand[i],caption:'The book being studied'}]},'From the text')];
+            break;
+          }
+        }
+      }
+    }
+    if(!comps.length)return 0;
+    if(!wrap){
+      wrap=genuiEl('div','genui');
+      const anchor=bubble.querySelector('.chat-deeper,.chat-save-btn');
+      if(anchor)bubble.insertBefore(wrap,anchor);else bubble.appendChild(wrap);
+    }
+    wrap.insertBefore(comps[0],wrap.firstChild);   // a picture reads best at the top of the block
+    return 1;
+  }catch(_){clearPend();}
+  return 0;
+}
+
+// noRepaint: the animated path. Every streamed paint already strips the spec block via
+// genuiStripPartial, so there is nothing left to strip on completion — and repainting the bubble at
+// this point DESTROYS the deeper-directions control and the Save button, which were appended while
+// the answer was finishing. That wipe is what removed both from the UI.
+function attachGenUI(el,text,noRepaint){
   const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
   if(!bubble)return 0;
   const parsed=parseGenUI(text);
   const pending=bubble.querySelector('.gl-pending');
   if(pending)pending.remove();
-  if(!parsed.spec){bubble.innerHTML=formatChatReply(genuiStripPartial(text));return 0;}
+  if(!parsed.spec){if(!noRepaint)bubble.innerHTML=formatChatReply(genuiStripPartial(text));return 0;}
   const comps=sanitizeGenUI(genuiNormalizeSpec(parsed.spec));
   // Safe: formatChatReply escapes &, < and > BEFORE applying its own markup, so model text can
   // never become tags here. Component content never passes through innerHTML at all — it is
@@ -8705,8 +8791,12 @@ function attachGenUI(el,text){
   // Safe: formatChatReply escapes &, < and > BEFORE applying its own markup, so model text
   // cannot become tags here. Component content does not pass through innerHTML at all — it is
   // built with createElement/textContent.
-  bubble.innerHTML=formatChatReply(parsed.prose);
-  bubble.appendChild(renderGenUI(comps));
+  if(!noRepaint)bubble.innerHTML=formatChatReply(parsed.prose);
+  const wrap=renderGenUI(comps);
+  // insert above the controls if they are already present, so the visual block still reads before
+  // the GO DEEPER directions rather than after them
+  const anchor=bubble.querySelector('.chat-deeper,.chat-save-btn');
+  if(anchor)bubble.insertBefore(wrap,anchor);else bubble.appendChild(wrap);
   return comps.length;
 }
 
@@ -9226,6 +9316,7 @@ const _wikiIO=('IntersectionObserver' in window)?new IntersectionObserver(functi
 
 function wikiFigureCard(subject,caption){
   const card=genuiEl('div','gl-fig');
+  card.dataset.subject=String(subject||'');   // so callers can probe whether a subject resolves
   const frame=genuiEl('div','gl-fig-frame');
   const note=genuiEl('div','gl-fig-note','Loading image\u2026');
   frame.appendChild(note);

@@ -7650,6 +7650,9 @@ async function sendChat(){
   inp.value = '';
   inp.style.height = 'auto';
   chatBusy=true;
+  // Sent — put the chips away until the user reaches for the composer again. Hide rather than
+  // blur: on a phone the keyboard usually stays up, and stealing focus would drop it.
+  hideChatChips();
 
   let userMsg = raw;
   if(S.chapterData && S.book >= 0){
@@ -7829,6 +7832,10 @@ function revealChatChips(){
   const sc=document.getElementById('screen-chat');
   if(sc)sc.classList.remove('chips-idle');
 }
+function hideChatChips(){
+  const sc=document.getElementById('screen-chat');
+  if(sc)sc.classList.add('chips-idle');
+}
 function wireChatComposer(){
   const sc=document.getElementById('screen-chat');
   const inp=document.getElementById('chat-input');
@@ -7846,7 +7853,6 @@ function askFollowUp(context, question){
   setTimeout(function(){
     const inp=document.getElementById('chat-input');
     if(inp)inp.value=question||'';
-    revealChatChips();
     sendChat();
   },140);
 }

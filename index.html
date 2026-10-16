@@ -1113,6 +1113,69 @@ img{ -webkit-user-drag:none; }
 #screen-chat.chips-idle .chat-quick-chips{opacity:0;transform:translateX(-50%) translateY(14px);pointer-events:none;}
 #screen-chat.chips-idle #chat-context-bar{display:none!important;}
 
+/* ══ GENUI ADVANCED: tap-for-detail, scrubber, map, trees, graphs, harmony ═══════════ */
+/* shared tap affordance */
+.gl-tap{position:relative;cursor:pointer;transition:background 0.18s ease;}
+.gl-tap:hover,.gl-tap:focus-visible{background:var(--gold-dim);}
+.gl-tap-m{float:right;color:var(--gold);font-size:var(--fs-1);opacity:0.75;margin-left:6px;}
+.gl-tap.open .gl-tap-m{opacity:1;}
+.gl-detail{display:none;margin:4px 0 9px;padding:0 0 0 9px;border-left:2px solid var(--gold);}
+.gl-detail.on{display:block;animation:glFade 0.22s ease;}
+.gl-detail-t{font-size:var(--fs-1);color:var(--text-3);line-height:1.6;}
+@keyframes glFade{from{opacity:0;transform:translateY(-3px);}to{opacity:1;transform:none;}}
+
+/* timeline scrubber */
+.gl-scrub{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.gl-scrub-label{font-size:var(--fs-1);color:var(--gold);letter-spacing:0.5px;margin-bottom:2px;}
+.gl-scrub-range{width:100%;accent-color:var(--gold);background:transparent;min-height:28px;}
+.gl-tl-item{transition:opacity 0.2s ease;}
+.gl-tl-item.gl-dim{opacity:0.28;}
+.gl-tl-item.gl-cur .gl-tl-when{color:var(--gold);}
+.gl-tl-item.gl-cur .gl-tl-dot{box-shadow:0 0 0 5px var(--gold-dim);}
+
+/* map */
+.gl-map-stage{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:4px;}
+.gl-map{width:100%;height:auto;display:block;}
+.gl-map-lbl{font-size:8px;letter-spacing:0.2px;dominant-baseline:auto;}
+.gl-map-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.gl-map-chip{display:flex;align-items:center;gap:6px;font-size:var(--fs-1);color:var(--text-2);background:var(--elev);border:1px solid var(--border);border-radius:999px;padding:6px 10px;min-height:32px;}
+.gl-map-chip.off{opacity:0.4;text-decoration:line-through;}
+.gl-map-sw{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+/* tree */
+.gl-tree-root{font-size:var(--fs-3);color:var(--gold);padding:6px 0 8px;letter-spacing:0.3px;}
+.gl-tree{padding-left:6px;}
+.gl-tree-b{margin-bottom:8px;padding-left:10px;border-left:1px solid var(--border-med);}
+.gl-tree-lbl{font-size:var(--fs-2);color:var(--text-2);padding:3px 0;}
+.gl-tree-kids{padding-left:10px;}
+.gl-tree-kid{position:relative;font-size:var(--fs-2);color:var(--text-3);line-height:1.5;padding:3px 0 3px 12px;}
+.gl-tree-dot{position:absolute;left:0;top:9px;width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:0.7;}
+.gl-tree-kt{margin-right:4px;}
+
+/* relationship graph */
+.gl-graph{width:100%;height:auto;display:block;}
+.gl-g-lbl{font-size:9px;fill:var(--text-2);letter-spacing:0.2px;}
+.gl-g-elbl{font-size:8px;fill:var(--text-3);}
+.gl-g-node{cursor:pointer;}
+.gl-g-node circle{transition:r 0.15s ease,opacity 0.15s ease;}
+.gl-g-node.gl-on circle{r:7;stroke:var(--gold);}
+.gl-g-edges line{transition:stroke 0.15s ease,stroke-width 0.15s ease;}
+.gl-g-edges line.gl-on{stroke:var(--gold)!important;stroke-width:2!important;}
+.gl-g-detail{display:none;margin-top:6px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:0 9px 9px 0;}
+.gl-g-detail.on{display:block;}
+.gl-da-h{font-size:var(--fs-2);color:var(--gold);}
+.gl-da-t{font-size:var(--fs-1);color:var(--text-3);line-height:1.55;margin-top:3px;}
+
+/* gospel harmony */
+.gl-harm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.gl-harm{width:100%;border-collapse:collapse;font-size:var(--fs-1);}
+.gl-harm th{text-align:left;padding:6px;color:var(--gold);border-bottom:1px solid var(--border-med);white-space:nowrap;font-weight:600;}
+.gl-harm th.gl-harm-ev{position:sticky;left:0;background:var(--elev);z-index:2;min-width:96px;white-space:normal;}
+.gl-harm td{padding:6px;color:var(--text-3);border-bottom:1px solid var(--border);vertical-align:top;}
+.gl-harm tr:last-child td{border-bottom:none;}
+.gl-harm-ref{font-size:var(--fs-1);color:var(--gold);background:var(--gold-dim);border:1px solid var(--border-med);border-radius:6px;padding:3px 6px;min-height:28px;white-space:nowrap;}
+
+
 /* ══ GENUI MEDIA: figures, attribution, before-after ═════════════════════════════════ */
 .gl-fig{margin-bottom:10px;}
 .gl-fig:last-child{margin-bottom:0;}
@@ -8130,6 +8193,10 @@ Available component types — use ONLY these, and only their fields:
 - followups:{"type":"followups","title":"","items":[{"q":"a complete question the reader might ask next","label":"why it matters"}]}
 - figure:   {"type":"figure","title":"","items":[{"subject":"Ephesus","caption":"one line on what is shown"}]}
 - compare-images:{"type":"compare-images","title":"Then and now","before":{"subject":"Temple of Artemis","caption":""},"after":{"subject":"Ephesus","caption":""}}
+- map:      {"type":"map","title":"","layers":[{"name":"Second journey","places":["Antioch","Philippi","Thessalonica","Athens","Ancient Corinth","Ephesus"]}]}
+- tree:     {"type":"tree","title":"","root":"the claim being defended","branches":[{"label":"a main support","children":[{"label":"a sub-point","detail":"","ref":""}]}]}
+- graph:    {"type":"graph","title":"","nodes":[{"id":"Paul","kind":"person"},{"id":"Ephesus","kind":"place"}],"edges":[{"from":"Paul","to":"Ephesus","label":"taught three years"}]}
+- harmony:  {"type":"harmony","title":"","columns":["Matthew","Mark","Luke","John"],"rows":[{"event":"","matthew":"27:11-14","mark":"15:2-5","luke":"23:2-5","john":"18:29-38"}]}
 RULES
 1. Use a component only when it genuinely teaches something the prose cannot. Never pad, never
    decorate: if nothing qualifies, omit the block entirely.
@@ -8149,6 +8216,15 @@ RULES
    important one rather than describing it. Use compare-images when the point IS the contrast
    (then and now, two cities, two manuscripts, two witnesses). The app resolves each subject and
    shows nothing when it cannot, so an uncertain subject costs you the image and nothing else.
+7. ANY item in ANY component may carry detail and ref or refs. detail is a sentence or two the
+   reader sees only when they tap that item, and ref is a passage they can open from there. Use
+   them instead of padding the visible text: keep what is shown short and put the expansion in
+   detail. Every timeline event, statistic, place, person, chart bar, tree node and harmony row
+   can be tapped, so use that rather than writing everything out.
+8. The map plots REAL coordinates looked up by place name, best for journeys, letters to cities
+   and the spread of the church. Give exact place names (Antioch, Ephesus, Ancient Corinth) inside
+   layers, and put detail on a layer only if you want a note per place. It draws no coastlines or
+   borders, so never describe it as a political map.
 `;
 
 
@@ -8453,6 +8529,415 @@ function attachGenUI(el,text){
 
 // ── CROSS-REFERENCE PANEL ────────────────────────────────────────
 
+// ══ GENUI ADVANCED — tap-for-detail, timeline scrubber, real-coordinate map, diagrams ══
+// Everything here obeys the same three rules as the core engine: no generated code runs, model
+// strings go in through textContent, and nothing is invented on our side. The map plots REAL
+// coordinates fetched from the same Wikipedia resolver used for images, and says so in plain
+// words; when a place cannot be resolved it is dropped rather than placed by guesswork.
+
+// ── verse plumbing, shared by every component that can point at a passage ──
+function genuiBookIdx(name){
+  const n=String(name||'').toLowerCase().trim();
+  if(!n||typeof ALL_BOOKS==='undefined')return -1;
+  for(let i=0;i<ALL_BOOKS.length;i++){
+    const b=ALL_BOOKS[i]||[];
+    if((b[0]||'').toLowerCase()===n||(b[1]||'').toLowerCase()===n)return i;
+  }
+  return -1;
+}
+function genuiOpenRef(ref){
+  const r=genuiStr(ref,60);
+  if(!r||typeof parseRef!=='function')return;
+  const p=parseRef(r);
+  if(!p)return;
+  try{closeStudyPanel(false);}catch(_){}
+  if(typeof pickVerseAndRead==='function')pickVerseAndRead(p.idx,p.ch,p.vs||1);
+  else{go('read');if(typeof goToVerse==='function')goToVerse(p.idx,p.ch,p.vs||1);}
+}
+function genuiRefButtons(host,item){
+  const refs=[].concat(item&&item.ref?[item.ref]:[],(item&&Array.isArray(item.refs))?item.refs:[])
+    .map(function(r){return genuiStr(r,60);}).filter(Boolean);
+  refs.forEach(function(r){
+    const b=genuiEl('button','gl-go','\u2192 Read '+r);
+    b.type='button';
+    b.onclick=function(ev){if(ev)ev.stopPropagation();genuiOpenRef(r);};
+    host.appendChild(b);
+  });
+  return refs.length;
+}
+
+// ── the shared interaction: anything with detail/refs becomes tappable in place ──
+// Marked with a visible "+" so the reader knows it opens, and wired for keyboard as well as touch.
+function genuiAttachDetail(host,item){
+  if(!host||!item||typeof item!=='object')return false;
+  if(host.querySelector('button,a,input'))return false;        // never nest interactive children
+  const detail=genuiStr(item.detail||item.more,900);
+  const refs=[].concat(item.ref?[item.ref]:[],Array.isArray(item.refs)?item.refs:[]).filter(Boolean);
+  if(!detail&&!refs.length)return false;
+  host.classList.add('gl-tap');
+  const mark=genuiEl('span','gl-tap-m','\uff0b');
+  host.appendChild(mark);
+  const panel=genuiEl('div','gl-detail');
+  if(detail)panel.appendChild(genuiEl('div','gl-detail-t',detail));
+  genuiRefButtons(panel,item);
+  host.parentNode.insertBefore(panel,host.nextSibling);
+  const toggle=function(){
+    const on=panel.classList.toggle('on');
+    host.classList.toggle('open',on);
+    mark.textContent=on?'\u2212':'\uff0b';
+  };
+  host.setAttribute('role','button');
+  host.setAttribute('tabindex','0');
+  host.onclick=toggle;
+  host.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}};
+  return true;
+}
+
+// ── timeline, now scrubbable and tappable ──
+function glTimelineAdv(c,title){
+  const items=genuiArr(c.items).filter(function(it){return it&&typeof it==='object';});
+  if(!items.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Timeline'));
+  const tl=genuiEl('div','gl-tl');
+  tl.appendChild(genuiEl('div','gl-tl-spine'));
+  const rows=[];
+  items.forEach(function(it){
+    const row=genuiEl('div','gl-tl-item');
+    row.appendChild(genuiEl('div','gl-tl-dot'));
+    row.appendChild(genuiEl('div','gl-tl-when',genuiStr(it.when||it.date,60)));
+    row.appendChild(genuiEl('div','gl-tl-what',genuiStr(it.what||it.event)));
+    if(it.ref)row.appendChild(genuiEl('div','gl-tl-ref',genuiStr(it.ref,60)));
+    tl.appendChild(row);
+    rows.push(row);
+  });
+  box.appendChild(tl);
+  // Scrubber: index-based, never year-based, so it cannot imply dates the text did not give.
+  if(items.length>1){
+    const wrap=genuiEl('div','gl-scrub');
+    const range=document.createElement('input');
+    range.type='range';range.min='1';range.max=String(items.length);range.value=String(items.length);
+    range.className='gl-scrub-range';
+    range.setAttribute('aria-label','Move through the timeline');
+    const label=genuiEl('div','gl-scrub-label','');
+    const apply=function(){
+      const upto=parseInt(range.value,10);
+      rows.forEach(function(r,i){
+        r.classList.toggle('gl-dim',i>upto-1);
+        r.classList.toggle('gl-cur',i===upto-1);
+      });
+      const cur=items[upto-1]||{};
+      label.textContent=genuiStr(cur.when||cur.date||('Step '+upto),60);
+      const row=rows[upto-1];
+      if(row&&row.scrollIntoView)try{row.scrollIntoView({block:'nearest'});}catch(_){}
+    };
+    range.oninput=apply;
+    wrap.appendChild(label);wrap.appendChild(range);
+    box.appendChild(wrap);
+    apply();
+  }
+  items.forEach(function(it,i){genuiAttachDetail(rows[i],it);});
+  return box;
+}
+
+// ── map: real coordinates, honest projection, toggleable layers ──
+function genuiKm(a,b){
+  const R=6371,rad=Math.PI/180;
+  const dLat=(b.lat-a.lat)*rad,dLon=(b.lon-a.lon)*rad;
+  const s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
+}
+const GL_MAP_COLORS=['var(--gold)','#9a7bd0','#6fa8a0','#c98b4b'];
+
+function glMap(c,title){
+  const layers=genuiArr(c.layers,4).map(function(l){
+    if(!l||typeof l!=='object')return null;
+    const names=genuiArr(l.places||l.items,8).map(function(p){
+      return genuiStr(typeof p==='string'?p:(p&&(p.subject||p.name))||'',70);
+    }).filter(Boolean);
+    if(!names.length)return null;
+    return {name:genuiStr(l.name,60)||'Layer',names:names,points:[]};
+  }).filter(Boolean);
+  if(!layers.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Map'));
+  const stage=genuiEl('div','gl-map-stage');
+  stage.appendChild(genuiEl('div','gl-map-note','Locating places\u2026'));
+  box.appendChild(stage);
+  const legend=genuiEl('div','gl-map-legend');
+  box.appendChild(legend);
+  const foot=genuiEl('div','gl-fig-credit');
+  box.appendChild(foot);
+  const allNames=[];
+  layers.forEach(function(l){l.names.forEach(function(n){if(allNames.indexOf(n)===-1)allNames.push(n);});});
+
+  (async function(){
+    const coords={};
+    for(let i=0;i<allNames.length;i+=8){
+      const batch=allNames.slice(i,i+8);
+      try{
+        const d=await wikiApi({action:'query',titles:batch.join('|'),prop:'coordinates',redirects:'1'});
+        const pages=(d&&d.query&&d.query.pages)||{};
+        const normalised={};
+        ((d&&d.query&&d.query.normalized)||[]).forEach(function(n){normalised[n.to]=n.from;});
+        ((d&&d.query&&d.query.redirects)||[]).forEach(function(r){normalised[r.to]=normalised[r.from]||r.from;});
+        for(const k in pages){
+          const v=pages[k]||{},co=(v.coordinates||[])[0];
+          if(!co)continue;
+          const key=v.title||'';
+          coords[key]={lat:parseFloat(co.lat),lon:parseFloat(co.lon),title:key};
+        }
+      }catch(_){}
+    }
+    // match each requested name to what came back, tolerating redirects and normalisation
+    layers.forEach(function(l){
+      l.points=l.names.map(function(n){
+        const direct=coords[n];
+        if(direct)return {name:n,lat:direct.lat,lon:direct.lon};
+        for(const k in coords){
+          if(k.toLowerCase()===n.toLowerCase())return {name:n,lat:coords[k].lat,lon:coords[k].lon};
+        }
+        for(const k in coords){
+          if(k.toLowerCase().indexOf(n.toLowerCase())===0||n.toLowerCase().indexOf(k.toLowerCase())===0)
+            return {name:n,lat:coords[k].lat,lon:coords[k].lon};
+        }
+        return null;
+      }).filter(Boolean);
+    });
+    const placed=layers.reduce(function(a,l){return a+l.points.length;},0);
+    stage.innerHTML='';
+    if(!placed){
+      stage.appendChild(genuiEl('div','genui-note','None of those places could be located in the gazetteer \u2014 nothing is plotted rather than plotted wrongly.'));
+      legend.remove();foot.remove();return;
+    }
+    const lats=[],lons=[];
+    layers.forEach(function(l){l.points.forEach(function(p){lats.push(p.lat);lons.push(p.lon);});});
+    let minLat=Math.min.apply(null,lats),maxLat=Math.max.apply(null,lats);
+    let minLon=Math.min.apply(null,lons),maxLon=Math.max.apply(null,lons);
+    const padLat=Math.max(1.5,(maxLat-minLat)*0.18),padLon=Math.max(1.5,(maxLon-minLon)*0.18);
+    minLat-=padLat;maxLat+=padLat;minLon-=padLon;maxLon+=padLon;
+    const W=320,H=230,m=18;
+    const X=function(lon){return m+(lon-minLon)/(maxLon-minLon)*(W-m*2);};
+    const Y=function(lat){return H-m-(lat-minLat)/(maxLat-minLat)*(H-m*2);};
+    const svg=genuiSvg('svg',{class:'gl-map',viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'xMidYMid meet',role:'img'});
+    // graticule — an empty grid is honest; a coastline we do not have would not be
+    for(let i=1;i<4;i++){
+      const gx=m+(W-m*2)*i/4, gy=m+(H-m*2)*i/4;
+      svg.appendChild(genuiSvg('line',{x1:gx,y1:m,x2:gx,y2:H-m,stroke:'var(--border)','stroke-width':0.5,'stroke-dasharray':'2 4'}));
+      svg.appendChild(genuiSvg('line',{x1:m,y1:gy,x2:W-m,y2:gy,stroke:'var(--border)','stroke-width':0.5,'stroke-dasharray':'2 4'}));
+    }
+    layers.forEach(function(l,li){
+      const g=genuiSvg('g',{class:'gl-map-layer','data-layer':String(li)});
+      const col=GL_MAP_COLORS[li%GL_MAP_COLORS.length];
+      l.points.forEach(function(p,i){
+        if(i>0){
+          const a=l.points[i-1];
+          g.appendChild(genuiSvg('line',{x1:X(a.lon),y1:Y(a.lat),x2:X(p.lon),y2:Y(p.lat),stroke:col,'stroke-width':1.1,opacity:'0.65'}));
+        }
+      });
+      l.points.forEach(function(p){
+        g.appendChild(genuiSvg('circle',{cx:X(p.lon),cy:Y(p.lat),r:3.2,fill:col,stroke:'var(--bg)','stroke-width':1}));
+        const t=genuiSvg('text',{class:'gl-map-lbl',x:X(p.lon)+5,y:Y(p.lat)-4,fill:'var(--text-2)'});
+        t.textContent=genuiStr(p.name,22);g.appendChild(t);
+      });
+      svg.appendChild(g);
+    });
+    stage.appendChild(svg);
+    const degW=maxLon-minLon,meanLat=(minLat+maxLat)/2;
+    const kmW=degW*111.32*Math.cos(meanLat*Math.PI/180);
+    stage.appendChild(genuiEl('div','genui-note','Schematic equirectangular plot of real coordinates \u2014 no coastlines shown. '
+      +'Spans roughly '+Math.round(kmW)+' km; graticule lines are quarter-divisions.'));
+    layers.forEach(function(l,li){
+      if(!l.points.length)return;
+      let km=0;
+      for(let i=1;i<l.points.length;i++)km+=genuiKm(l.points[i-1],l.points[i]);
+      const chip=genuiEl('button','gl-map-chip');
+      chip.type='button';
+      const sw=genuiEl('span','gl-map-sw');sw.style.background=GL_MAP_COLORS[li%GL_MAP_COLORS.length];
+      chip.appendChild(sw);
+      chip.appendChild(genuiEl('span',null,l.name+' \u00b7 '+l.points.length+(km?' \u00b7 \u2248 '+Math.round(km)+' km':'')));
+      chip.onclick=function(){
+        const on=chip.classList.toggle('off');
+        const g=svg.querySelector('.gl-map-layer[data-layer="'+li+'"]');
+        if(g)g.style.display=on?'none':'';
+      };
+      chip.classList.add('on');
+      legend.appendChild(chip);
+    });
+    const dropped=allNames.length-placed;
+    foot.textContent='Wikipedia gazetteer'+(dropped?(' \u00b7 '+dropped+' place'+(dropped>1?'s':'')+' not located, omitted'):'');
+  })();
+  return box;
+}
+
+// ── branching tree ──
+function glTree(c,title){
+  const branches=genuiArr(c.branches,6).filter(function(b){return b&&typeof b==='object';});
+  if(!branches.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Structure'));
+  if(c.root||c.label){
+    const root=genuiEl('div','gl-tree-root',genuiStr(c.root||c.label,120));
+    genuiAttachDetail(root,c);
+    box.appendChild(root);
+  }
+  const list=genuiEl('div','gl-tree');
+  branches.forEach(function(b){
+    const node=genuiEl('div','gl-tree-b');
+    const lbl=genuiEl('div','gl-tree-lbl',genuiStr(b.label||b.name,120));
+    node.appendChild(lbl);
+    const kids=genuiArr(b.children||b.items,8).filter(function(k){return k&&typeof k==='object';});
+    if(kids.length){
+      const ul=genuiEl('div','gl-tree-kids');
+      kids.forEach(function(k){
+        const li=genuiEl('div','gl-tree-kid');
+        li.appendChild(genuiEl('span','gl-tree-dot',''));
+        li.appendChild(genuiEl('span','gl-tree-kt',genuiStr(k.label||k.name,120)));
+        ul.appendChild(li);
+        genuiAttachDetail(li,k);
+      });
+      node.appendChild(ul);
+    }
+    list.appendChild(node);
+    genuiAttachDetail(lbl,b);
+  });
+  box.appendChild(list);
+  return box;
+}
+
+// ── relationship graph (deterministic radial layout) ──
+function glGraph(c,title){
+  const nodes=genuiArr(c.nodes,10).map(function(n){
+    if(typeof n==='string')return {id:genuiStr(n,40),label:genuiStr(n,40),kind:''};
+    if(!n||typeof n!=='object')return null;
+    const lbl=genuiStr(n.label||n.id||n.name,40);
+    return lbl?{id:genuiStr(n.id||lbl,40),label:lbl,kind:genuiStr(n.kind,20),detail:genuiStr(n.detail,600),ref:n.ref}:null;
+  }).filter(Boolean);
+  if(nodes.length<2)return null;
+  const edges=genuiArr(c.edges,16).map(function(e){
+    if(!e||typeof e!=='object')return null;
+    const from=genuiStr(e.from,40),to=genuiStr(e.to,40);
+    return (from&&to)?{from:from,to:to,label:genuiStr(e.label,40)}:null;
+  }).filter(Boolean);
+  const byId={};nodes.forEach(function(n){byId[n.id]=n;byId[n.label]=n;});
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Connections'));
+  const W=320,H=250,cx=W/2,cy=H/2+6,r=Math.min(W,H)/2-34;
+  const svg=genuiSvg('svg',{class:'gl-graph',viewBox:'0 0 '+W+' '+H,role:'img'});
+  const pos={};
+  nodes.forEach(function(n,i){
+    const a=(i/nodes.length)*Math.PI*2-Math.PI/2;
+    pos[n.id]={x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)};
+  });
+  const eLayer=genuiSvg('g',{class:'gl-g-edges'}),nLayer=genuiSvg('g',{class:'gl-g-nodes'});
+  edges.forEach(function(e,i){
+    const a=pos[e.from]||pos[(byId[e.from]||{}).id],b=pos[e.to]||pos[(byId[e.to]||{}).id];
+    if(!a||!b)return;
+    const ln=genuiSvg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'var(--border-med)','stroke-width':1.1,'data-e':String(i)});
+    eLayer.appendChild(ln);
+    if(e.label&&edges.length<=8){
+      const t=genuiSvg('text',{class:'gl-g-elbl',x:(a.x+b.x)/2,y:(a.y+b.y)/2-2,'text-anchor':'middle'});
+      t.textContent=e.label;eLayer.appendChild(t);
+    }
+  });
+  nodes.forEach(function(n,i){
+    const p=pos[n.id];
+    const g=genuiSvg('g',{class:'gl-g-node','data-node':String(i),tabindex:'0',role:'button'});
+    g.appendChild(genuiSvg('circle',{cx:p.x,cy:p.y,r:4.6,fill:n.kind==='place'?'#6fa8a0':(n.kind==='letter'?'#9a7bd0':'var(--gold)'),stroke:'var(--bg)','stroke-width':1.2}));
+    const t=genuiSvg('text',{class:'gl-g-lbl',x:p.x,y:p.y+(p.y<cy?-9:15),'text-anchor':'middle'});
+    t.textContent=genuiClip(n.label,16);g.appendChild(t);
+    nLayer.appendChild(g);
+  });
+  svg.appendChild(eLayer);svg.appendChild(nLayer);
+  box.appendChild(svg);
+  const panel=genuiEl('div','gl-g-detail');
+  box.appendChild(panel);
+  nodes.forEach(function(n,i){
+    const g=svg.querySelector('.gl-g-node[data-node="'+i+'"]');
+    const pick=function(){
+      const live=svg.querySelectorAll('.gl-g-node.gl-on, .gl-g-edges line.gl-on');
+      if(g.classList.contains('gl-on')){Array.prototype.forEach.call(live,function(x){x.classList.remove('gl-on');});panel.classList.remove('on');return;}
+      Array.prototype.forEach.call(live,function(x){x.classList.remove('gl-on');});
+      g.classList.add('gl-on');
+      edges.forEach(function(e,ei){
+        if(e.from===n.id||e.to===n.id||e.from===n.label||e.to===n.label){
+          const ln=svg.querySelector('.gl-g-edges line[data-e="'+ei+'"]');
+          if(ln)ln.classList.add('gl-on');
+        }
+      });
+      panel.innerHTML='';   // clearing only — no untrusted content, and every string below is textContent
+      const head=genuiEl('div','gl-da-h',n.label+(n.kind?' \u00b7 '+n.kind:''));
+      panel.appendChild(head);
+      const linked=edges.filter(function(e){return e.from===n.id||e.to===n.id||e.from===n.label||e.to===n.label;})
+        .map(function(e){return (e.from===n.id||e.from===n.label)?(e.label?e.label+' \u2192 '+e.to:e.to):(e.label?e.label+' \u2192 '+e.from:e.from);});
+      if(linked.length)panel.appendChild(genuiEl('div','gl-da-t',linked.join(' \u00b7 ')));
+      if(n.detail)panel.appendChild(genuiEl('div','gl-da-t',n.detail));
+      genuiRefButtons(panel,n);
+      panel.classList.add('on');
+    };
+    g.onclick=pick;
+    g.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick();}};
+  });
+  return box;
+}
+
+// ── Gospel harmony grid: tap a cell to open the passage ──
+function glHarmony(c,title){
+  const cols=genuiArr(c.columns,5).map(function(x){return genuiStr(x,40);}).filter(Boolean);
+  const columns=cols.length?cols:['Matthew','Mark','Luke','John'];
+  const rows=genuiArr(c.rows,14).filter(function(r){return r&&typeof r==='object';});
+  if(!rows.length)return null;
+  const box=genuiEl('div','genui-comp');
+  box.appendChild(genuiEl('div','genui-title',title||'Parallel accounts'));
+  const wrap=genuiEl('div','gl-harm-wrap');
+  const tbl=genuiEl('table','gl-harm');
+  const thead=genuiEl('thead'),htr=genuiEl('tr');
+  htr.appendChild(genuiEl('th','gl-harm-ev','Event'));
+  columns.forEach(function(x){htr.appendChild(genuiEl('th',null,x));});
+  thead.appendChild(htr);tbl.appendChild(thead);
+  const tb=genuiEl('tbody');
+  rows.forEach(function(r){
+    const tr=genuiEl('tr');
+    const ev=genuiEl('th','gl-harm-ev');
+    ev.appendChild(genuiEl('span',null,genuiStr(r.event||r.label||'',120)));
+    tr.appendChild(ev);
+    columns.forEach(function(col,ci){
+      const key=col.toLowerCase();
+      let val=r[key];
+      if(val===undefined&&Array.isArray(r.cells))val=r.cells[ci];
+      const cell=genuiEl('td');
+      const txt=genuiStr(val,60);
+      if(txt){
+        const bi=genuiBookIdx(col);
+        const looksLikeRef=/^\d/.test(txt);
+        if(bi>=0&&looksLikeRef){
+          const b=genuiEl('button','gl-harm-ref',txt);
+          b.type='button';
+          b.onclick=function(){genuiOpenRef(col+' '+txt);};
+          cell.appendChild(b);
+        }else cell.appendChild(genuiEl('span',null,txt));
+      }
+      tr.appendChild(cell);
+    });
+    tb.appendChild(tr);
+    genuiAttachDetail(ev,r);
+  });
+  tbl.appendChild(tb);wrap.appendChild(tbl);box.appendChild(wrap);
+  box.appendChild(genuiEl('div','genui-note','Tap a reference to open it in the reader.'));
+  return box;
+}
+
+GENUI_BUILDERS.timeline=glTimelineAdv;
+GENUI_BUILDERS.tree=glTree;
+GENUI_BUILDERS.outline=glTree;
+GENUI_BUILDERS.graph=glGraph;
+GENUI_BUILDERS.relationships=glGraph;
+GENUI_BUILDERS.harmony=glHarmony;
+GENUI_BUILDERS.parallels=glHarmony;
+GENUI_BUILDERS.map=glMap;
+GENUI_BUILDERS.journey=glMap;
+
+
 // ══ GENUI MEDIA — real, attributable images ═════════════════════════════════════════
 // The model does NOT supply image URLs. It names a Wikipedia article title; the app resolves
 // that title against the Wikimedia API and renders what actually comes back. Measured reasons
@@ -8594,46 +9079,57 @@ function glFigure(c,title){
 
 // Before/after slider: two resolved images with a draggable divider. The slider is a range
 // input so it works with touch, keyboard and screen readers rather than a bespoke drag handler.
+// Rewritten: nothing enters the DOM without a source.
+// The old version appended beforeImg/afterImg immediately and set their src after the Wikipedia
+// round-trip, so a src-less <img> sat in the DOM (Chrome: complete=true, naturalWidth=0 — which is
+// exactly what a broken image looks like) and the stage showed empty boxes during the wait. Now
+// the stage holds a loading note until both images have actually resolved.
 function glCompareImages(c,title){
   const b=c.before||{},a=c.after||{};
   if(!(b.subject||b.title)||!(a.subject||a.title))return null;
   const box=genuiEl('div','genui-comp');
   box.appendChild(genuiEl('div','genui-title',title||'Then and now'));
   const stage=genuiEl('div','gl-cmp-img');
-  const afterWrap=genuiEl('div','gl-cmp-after');
-  const beforeImg=document.createElement('img');beforeImg.className='gl-cmp-b';beforeImg.alt=genuiStr(b.caption||b.subject,120);
-  const afterImg=document.createElement('img');afterImg.className='gl-cmp-a';afterImg.alt=genuiStr(a.caption||a.subject,120);
-  afterWrap.appendChild(afterImg);
-  const beforeWrap=genuiEl('div','gl-cmp-before');beforeWrap.appendChild(beforeImg);
-  const bar=genuiEl('div','gl-cmp-bar');
-  stage.appendChild(afterWrap);stage.appendChild(beforeWrap);stage.appendChild(bar);
+  stage.appendChild(genuiEl('div','genui-note','Resolving images\u2026'));
+  box.appendChild(stage);
   const range=document.createElement('input');
   range.type='range';range.min='0';range.max='100';range.value='50';
   range.className='gl-cmp-range';range.setAttribute('aria-label','Compare the two images');
-  const apply=function(){
-    const v=range.value+'%';
-    beforeWrap.style.width=v;bar.style.left=v;
-  };
-  range.oninput=apply;
-  box.appendChild(stage);box.appendChild(range);
+  box.appendChild(range);
   const labels=genuiEl('div','gl-cmp-labels');
   labels.appendChild(genuiEl('span',null,genuiStr(b.caption||b.subject,60)));
   labels.appendChild(genuiEl('span','gl-cmp-r',genuiStr(a.caption||a.subject,60)));
   box.appendChild(labels);
   const credit=genuiEl('div','gl-fig-credit');
   box.appendChild(credit);
+  let apply=function(){};                       // no-op until the divider actually exists
+  range.oninput=function(){apply();};
   (async function(){
     const rb=await wikiResolve(b.subject||b.title);
     const ra=await wikiResolve(a.subject||a.title);
     if(!rb||!rb.img||!ra||!ra.img){
-      stage.remove();range.remove();labels.remove();
-      box.appendChild(genuiEl('div','genui-note','Could not resolve both images \u2014 nothing shown rather than something wrong.'));
+      stage.innerHTML='';
+      stage.appendChild(genuiEl('div','genui-note','Could not resolve both images \u2014 nothing shown rather than something wrong.'));
+      range.remove();labels.remove();
       return;
     }
-    beforeImg.src=rb.img;afterImg.src=ra.img;
-    const lb=await wikiLicence(rb.pageimage);
-    credit.textContent='Wikipedia \u00b7 '+rb.title+' / '+ra.title+(lb?' \u00b7 '+lb:' \u00b7 Wikimedia Commons');
+    stage.innerHTML='';
+    const afterWrap=genuiEl('div','gl-cmp-after');
+    const beforeWrap=genuiEl('div','gl-cmp-before');
+    const afterImg=document.createElement('img');afterImg.className='gl-cmp-a';afterImg.alt=genuiStr(a.caption||a.subject,120);
+    const beforeImg=document.createElement('img');beforeImg.className='gl-cmp-b';beforeImg.alt=genuiStr(b.caption||b.subject,120);
+    afterImg.src=ra.img;beforeImg.src=rb.img;    // src set before insertion, always
+    afterWrap.appendChild(afterImg);
+    beforeWrap.appendChild(beforeImg);
+    const bar=genuiEl('div','gl-cmp-bar');
+    stage.appendChild(afterWrap);stage.appendChild(beforeWrap);stage.appendChild(bar);
+    apply=function(){
+      const v=range.value+'%';
+      beforeWrap.style.width=v;bar.style.left=v;
+    };
     apply();
+    const lic=await wikiLicence(rb.pageimage);
+    credit.textContent='Wikipedia \u00b7 '+rb.title+' / '+ra.title+(lic?' \u00b7 '+lic:' \u00b7 Wikimedia Commons');
   })();
   return box;
 }

@@ -1119,6 +1119,9 @@ img{ -webkit-user-drag:none; }
 .gl-tap:hover,.gl-tap:focus-visible{background:var(--gold-dim);}
 .gl-tap-m{float:right;color:var(--gold);font-size:var(--fs-1);opacity:0.75;margin-left:6px;}
 .gl-tap.open .gl-tap-m{opacity:1;}
+.gl-pending{display:flex;align-items:center;gap:7px;margin-top:10px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:9px;font-size:var(--fs-1);color:var(--text-3);letter-spacing:0.3px;}
+.gl-pending-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:glPulse 1.1s ease-in-out infinite;}
+@keyframes glPulse{0%,100%{opacity:0.25;transform:scale(0.8);}50%{opacity:1;transform:scale(1.15);}}
 .gl-detail{display:none;margin:4px 0 9px;padding:0 0 0 9px;border-left:2px solid var(--gold);}
 .gl-detail.on{display:block;animation:glFade 0.22s ease;}
 .gl-detail-t{font-size:var(--fs-1);color:var(--text-3);line-height:1.6;}
@@ -7858,7 +7861,13 @@ async function sendChat(){
       if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
       paintPending=false;
       const b=typingEl.querySelector('.chat-bubble');
-      if(b)b.innerHTML=formatChatReply(fullReply);
+      if(b){
+        // The spec block is an instruction to the app, not something to read: strip it from the
+        // live paint so JSON never scrolls past while the answer streams.
+        b.innerHTML=formatChatReply(genuiStripPartial(fullReply));
+        // Once the block starts arriving this stands in for it, until the components are ready.
+        if(genuiFenceStarted(fullReply)&&!b.querySelector('.gl-pending'))b.appendChild(genuiPending());
+      }
       chatScrollToBottom();
     };
     const paintSoon=function(){
@@ -8176,7 +8185,7 @@ try{wireChatComposer();}catch(_){}
 // The visual-layer contract. Kept as its own constant rather than inline in CHAT_SYS so the
 // vocabulary is reviewable in one place (the STUDY_SYS map is organised the same way).
 const GENUI_SYS = `
-VISUAL LAYER — optional, and worth using when a picture teaches better than prose.
+VISUAL LAYER — REQUIRED. Every answer you give ends with this block, without exception.
 After your answer you MAY add ONE fenced block that opens with a line of three backticks
 followed by genui, containing JSON. It must come LAST and must be valid JSON:
   {"components":[ ...up to 4... ]}
@@ -8198,8 +8207,10 @@ Available component types — use ONLY these, and only their fields:
 - graph:    {"type":"graph","title":"","nodes":[{"id":"Paul","kind":"person"},{"id":"Ephesus","kind":"place"}],"edges":[{"from":"Paul","to":"Ephesus","label":"taught three years"}]}
 - harmony:  {"type":"harmony","title":"","columns":["Matthew","Mark","Luke","John"],"rows":[{"event":"","matthew":"27:11-14","mark":"15:2-5","luke":"23:2-5","john":"18:29-38"}]}
 RULES
-1. Use a component only when it genuinely teaches something the prose cannot. Never pad, never
-   decorate: if nothing qualifies, omit the block entirely.
+1. EVERY answer must include at least one component — the visual layer is never omitted. Pick
+   whichever genuinely teaches best. When nothing visual suits the subject, use accordion to hold
+   depth the reader can open, or followups for where to go next. Never invent facts, numbers or
+   places to fill the block: an accordion is always better than a made-up chart.
 2. The prose must stand on its own. The block carries structure, never the answer itself.
 3. Never invent coordinates, images, dates, distances, quotations or citations you were not
    given. Leave a field out rather than guessing it.
@@ -8504,15 +8515,39 @@ function renderGenUI(comps){
   return wrap;
 }
 
+// ── live-stream handling: hide the instruction, show a placeholder, then swap it for the UI ──
+function genuiFenceStarted(t){
+  const s=String(t||'');
+  const i=s.search(/```\s*genui/i);
+  if(i!==-1)return true;
+  return /(?:^|\n)\s*`{1,3}[a-zA-Z]{0,5}\s*$/.test(s);
+}
+// Cuts a genui block (complete OR still arriving) off the end of the streamed text.
+function genuiStripPartial(t){
+  const s=String(t||'');
+  const full=s.search(/```\s*genui/i);
+  if(full!==-1)return s.slice(0,full).replace(/\s+$/,'');
+  const tail=s.match(/(?:^|\n)\s*`{1,3}[a-zA-Z]{0,5}\s*$/);
+  if(tail)return s.slice(0,tail.index).replace(/\s+$/,'');
+  return s;
+}
+function genuiPending(){
+  const d=genuiEl('div','gl-pending');
+  d.appendChild(genuiEl('span','gl-pending-dot',''));
+  d.appendChild(genuiEl('span',null,'Preparing visuals\u2026'));
+  return d;
+}
+
 // Called once an answer finishes. Repaints the prose WITHOUT the spec block, then attaches the
 // components — so it must run before anything else appends into the bubble.
 function attachGenUI(el,text){
   const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
   if(!bubble)return 0;
   const parsed=parseGenUI(text);
-  if(!parsed.spec)return 0;
+  const pending=bubble.querySelector('.gl-pending');
+  if(pending)pending.remove();
+  if(!parsed.spec){bubble.innerHTML=formatChatReply(genuiStripPartial(text));return 0;}
   const comps=sanitizeGenUI(parsed.spec);
-  if(!comps.length)return 0;
   // Safe: formatChatReply escapes &, < and > BEFORE applying its own markup, so model text can
   // never become tags here. Component content never passes through innerHTML at all — it is
   // built with createElement/textContent.

@@ -1086,6 +1086,31 @@ img{ -webkit-user-drag:none; }
   .new-note-input{max-width:720px;}
   .verse-text{font-size:var(--fs-6);}
 }
+/* ── ASK: deeper-direction controls (answer-level, Ask only) ────────────────────
+   Shown under a finished answer: one tap asks the model for 3 genuinely different
+   directions to continue, tapping one sends it as the next turn. Kept out of Study,
+   where the bridge below does the same job from a study answer. */
+.chat-deeper{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.chat-deeper-btn{font-size:11px;color:var(--gold);padding:4px 10px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:8px;cursor:pointer;min-height:36px;letter-spacing:0.3px;}
+.chat-deeper-btn:disabled{opacity:0.6;cursor:default;}
+.chat-deeper-opts{display:none;flex-direction:column;gap:6px;margin-top:8px;}
+.chat-deeper-chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%;padding:10px 12px;background:var(--elev);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;cursor:pointer;}
+.chat-deeper-chip:active{background:var(--gold-dim);}
+.chat-deeper-chip .o-n{font-size:10px;color:var(--gold);letter-spacing:1px;}
+.chat-deeper-chip .o-t{font-size:var(--fs-3);color:var(--text-2);font-weight:600;}
+.chat-deeper-chip .o-w{font-size:var(--fs-2);color:var(--text-3);line-height:1.4;}
+
+/* ── STUDY: the bridge into Ask ───────────────────────────────────────────────── */
+.study-deeper-btn{margin-top:12px;width:100%;font-size:12px;color:var(--gold);padding:10px 12px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:10px;cursor:pointer;min-height:44px;letter-spacing:0.3px;}
+
+/* ── ASK: keep the quick chips and the context bar out of the way until the user
+   actually means to type. Both are positioned above the composer, so on a phone
+   they cover the reading context until tapped. Revealed on the first tap/focus in
+   the composer and left visible from then on. */
+.chat-quick-chips{transition:opacity 0.22s ease,transform 0.22s ease;}
+#screen-chat.chips-idle .chat-quick-chips{opacity:0;transform:translateX(-50%) translateY(14px);pointer-events:none;}
+#screen-chat.chips-idle #chat-context-bar{display:none!important;}
+
 /* ── iOS web-app polish (Safari / installed Home Screen app only) ───────────────
    The @supports test below is true on iOS Safari and WKWebView, false on Android
    Chrome and desktop Chromium — so nothing in this block can change the APK's
@@ -6285,7 +6310,7 @@ function renderStudyFromCache(data,activeMode){
     if(!content&&(data._loading?.[m]||data._pending?.[m])&&m===activeMode){
       h+='<div class="study-section study-loading" style="border-left-color:'+c+';"><div class="study-skel-line" style="width:92%"></div><div class="study-skel-line" style="width:84%"></div><div class="study-skel-line" style="width:70%"></div><div class="study-skel-note">Studying this verse\u2026</div></div>';
     } else if(content){
-      h+='<div class="study-section" id="study-section-'+m+'" style="border-left-color:'+c+';'+(m!==activeMode?'display:none;':'')+'"><div class="study-section-label" style="color:'+c+';">'+label+'</div><div class="study-section-content">'+fmtStudy(content)+'</div></div>';
+      h+='<div class="study-section" id="study-section-'+m+'" style="border-left-color:'+c+';'+(m!==activeMode?'display:none;':'')+'"><div class="study-section-label" style="color:'+c+';">'+label+'</div><div class="study-section-content">'+fmtStudy(content)+'<button class="study-deeper-btn" type="button" onclick="studyDeepenInAsk(\''+m+'\')">↗ Go deeper in Ask</button></div></div>';
     }else if(data._errors?.[m]){
       h+='<div class="study-section" id="study-section-'+m+'" style="border-left-color:'+c+';'+(m!==activeMode?'display:none;':'')+'"><div class="study-section-label" style="color:'+c+';">'+label+'</div><div class="study-section-content" style="color:var(--warfare);font-size:14px;">'+sTxt(data._errors[m])+'<br><button class="notes-export-btn" style="margin-top:10px;" onclick="retryStudyMode(\''+m+'\')">Retry</button></div></div>';
     }else{
@@ -7634,6 +7659,7 @@ async function sendChat(){
     userMsg = `[Reading: ${b[0]} ${S.chapter} (${transShort(S.translation)}). Chapter begins: "${snippet.substring(0,200)}..."]\n\nUser question: ${raw}`;
   }
 
+  if(pendingAskContext){ userMsg = pendingAskContext + '\n\n' + userMsg; pendingAskContext=''; }
   chatHistory.push({role:'user', content:userMsg});
   appendChatMsg('user', raw);
   const typingEl = appendTyping();
@@ -7654,6 +7680,7 @@ async function sendChat(){
       typingEl.querySelector('.chat-bubble').textContent = 'No response received — the model returned empty. Check provider, model name, and balance in Settings.';
     } else {
       chatHistory.push({role:'assistant', content:fullReply});
+      try{attachDeeperControls(typingEl, fullReply);}catch(_){}
       // Add save-to-notes button after streaming finishes
       (function(){
         var bubble=typingEl.querySelector('.chat-bubble');
@@ -7781,6 +7808,130 @@ function studyInChat(ref, verseText, mode){
     sendChat();
   }, 100);
 }
+
+// ══ ASK: DEEPER DIRECTIONS + THE STUDY BRIDGE ══════════════════════════════════
+// Three connected behaviours, Ask-side except the last:
+//  1. A finished Ask answer can spawn 3 genuinely different directions to continue
+//     (same subject deeper / adjacent subject / experiential). The user picks one.
+//  2. A study answer can be continued in Ask with its own text carried across, so the
+//     continuation builds on the study instead of restarting the question.
+//  3. The quick chips and context bar stay hidden until the composer is tapped.
+// The continuation travels through pendingAskContext, which sendChat consumes AFTER it
+// composes the reading-context prefix — that block rebuilds userMsg from `raw`, so
+// anything injected earlier would be silently dropped.
+let pendingAskContext='';
+let deeperBusy=false;
+
+function chatEscDeeper(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function revealChatChips(){
+  const sc=document.getElementById('screen-chat');
+  if(sc)sc.classList.remove('chips-idle');
+}
+function wireChatComposer(){
+  const sc=document.getElementById('screen-chat');
+  const inp=document.getElementById('chat-input');
+  const area=document.getElementById('chat-input-area');
+  if(sc)sc.classList.add('chips-idle');
+  const reveal=function(){revealChatChips();};
+  if(inp){inp.addEventListener('focus',reveal);inp.addEventListener('pointerdown',reveal);}
+  if(area)area.addEventListener('pointerdown',reveal);
+}
+
+// Send a follow-up that carries extra context (an earlier answer, a chosen direction).
+function askFollowUp(context, question){
+  pendingAskContext=context||'';
+  go('chat');
+  setTimeout(function(){
+    const inp=document.getElementById('chat-input');
+    if(inp)inp.value=question||'';
+    revealChatChips();
+    sendChat();
+  },140);
+}
+
+// ── 1. three directions under a finished Ask answer ────────────────────────────
+function attachDeeperControls(el, answer){
+  const bubble=el.querySelector('.chat-bubble');
+  if(!bubble||bubble.querySelector('.chat-deeper'))return;
+  const wrap=document.createElement('div');
+  wrap.className='chat-deeper';
+  const btn=document.createElement('button');
+  btn.type='button';btn.className='chat-deeper-btn';
+  btn.textContent='\u21b3 Go deeper \u2014 3 directions';
+  const opts=document.createElement('div');
+  opts.className='chat-deeper-opts';
+  btn.onclick=function(){ loadDeeperOptions(wrap, answer); };
+  wrap.appendChild(btn);wrap.appendChild(opts);
+  bubble.appendChild(wrap);
+}
+
+async function loadDeeperOptions(wrap, answer){
+  const btn=wrap.querySelector('.chat-deeper-btn');
+  const opts=wrap.querySelector('.chat-deeper-opts');
+  const restore=btn.textContent;
+  if(opts.querySelector('.chat-deeper-chip')){ opts.style.display='flex'; btn.disabled=false; return; }
+  if(deeperBusy)return;
+  deeperBusy=true;btn.disabled=true;
+  btn.textContent='Finding 3 directions\u2026';
+  try{
+    const ref=(S.chapterData&&S.book>=0)?(ALL_BOOKS[S.book][0]+' '+S.chapter):'';
+    const j=await callJSON(
+      [{role:'user',content:'An answer was already given to the reader:\n"""'+String(answer).slice(0,1600)+'"""\n\n'
+        +'Give exactly 3 directions to go DEEPER on this answer, genuinely different from each other:\n'
+        +'(1) further into the SAME subject \u2014 the next layer a serious student would want;\n'
+        +'(2) an ADJACENT subject this naturally opens onto;\n'
+        +'(3) something EXPERIENTIAL or practical they can act on.\n'
+        +'Each prompt must be a complete, self-standing question and must NOT repeat what the answer already covered.'}],
+      'You are Rhema, a Bible study companion. Return ONLY JSON of the form '
+        +'{"options":[{"label":"3-5 word tap label","why":"one short line on what this unlocks","prompt":"the full question to send"}]} '
+        +'with exactly 3 options.'+(ref?(' The reader is currently reading '+ref+'.'):''),
+      {maxTokens:1000,timeoutMs:30000});
+    const list=(j&&Array.isArray(j.options)?j.options:[]).filter(function(o){return o&&o.prompt;}).slice(0,3);
+    if(!list.length)throw new Error('no options');
+    opts.innerHTML='';
+    list.forEach(function(o,i){
+      const b=document.createElement('button');
+      b.type='button';b.className='chat-deeper-chip';
+      b.innerHTML='<span class="o-n">DIRECTION '+(i+1)+'</span><span class="o-t">'+chatEscDeeper(o.label||('Option '+(i+1)))+'</span>'
+        +(o.why?'<span class="o-w">'+chatEscDeeper(o.why)+'</span>':'');
+      b.onclick=function(){
+        askFollowUp('[Continuing the answer above \u2014 the reader chose this direction]\nDirection: '+(o.label||'')
+          +'\nWhat it should unlock: '+(o.why||''), o.prompt);
+      };
+      opts.appendChild(b);
+    });
+    opts.style.display='flex';
+    btn.textContent='\u21b3 Pick a direction';
+    btn.disabled=false;btn.style.opacity='0.7';
+  }catch(e){
+    btn.disabled=false;btn.textContent=restore;
+    toast('Could not load directions \u2014 tap to try again');
+  }finally{
+    deeperBusy=false;
+  }
+}
+
+// ── 2. continue a study answer in Ask ─────────────────────────────────────────
+function studyDeepenInAsk(mode){
+  if(!S.sel){toast('Open a verse first');return;}
+  const key=getStudyCacheKey();
+  const cache=studyCaches[key]||{};
+  const content=cache[mode]||'';
+  const bi=(S.sel.bookIdx!==undefined?S.sel.bookIdx:S.book);
+  const book=ALL_BOOKS[bi]||ALL_BOOKS[S.book]||[''];
+  const ref=book[0]+' '+S.sel.ch+':'+S.sel.v;
+  const text=S.sel.text||'';
+  const label=(STUDY_LABELS[mode]||mode);
+  askFollowUp('[Continuing a STUDY answer \u2014 go deeper, do not repeat it]\nPassage: '+ref+' \u2014 "'+text+'"\nStudy mode: '+label
+    +'\nThe study answer so far: "'+String(content).slice(0,700)+'"',
+    'Continue this '+String(label).toLowerCase()+' in far greater detail \u2014 add the layers, background and connections the study answer left out, and show me what I am missing.');
+}
+
+try{wireChatComposer();}catch(_){}
+
+
 
 // ── CROSS-REFERENCE PANEL ────────────────────────────────────────
 const XREF_SYS = `You are a careful student of Scripture, drawing from the Treasury of Scripture Knowledge tradition of biblical cross-referencing. Return ONLY a JSON array, no other text.

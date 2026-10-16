@@ -8249,7 +8249,6 @@ Available component types — use ONLY these, and only their fields:
 - places:   {"type":"places","title":"","items":[{"name":"Ephesus","note":"","distance":"80 km from Miletus"}]}
 - people:   {"type":"people","title":"","items":[{"name":"Aquila","role":"tentmaker","note":"","ref":"Acts 18:2"}]}
 - accordion:{"type":"accordion","title":"","items":[{"heading":"","body":"the deeper detail"}]}
-- followups:{"type":"followups","title":"","items":[{"q":"a complete question the reader might ask next","label":"why it matters"}]}
 - figure:   {"type":"figure","title":"","items":[{"subject":"Ephesus","caption":"one line on what is shown"}]}
 - compare-images:{"type":"compare-images","title":"Then and now","before":{"subject":"Temple of Artemis","caption":""},"after":{"subject":"Ephesus","caption":""}}
 - map:      {"type":"map","title":"","layers":[{"name":"Second journey","places":["Antioch","Philippi","Thessalonica","Athens","Ancient Corinth","Ephesus"]}]}
@@ -8276,7 +8275,7 @@ RULES
    - The answer weighs two or more views, persons, books or practices -> include a compare.
    - The answer has a sequence of events -> include a timeline.
    AT LEAST ONE COMPONENT MUST BE GRAPHICAL \u2014 a figure, map, chart, tree, diagram or timeline.
-   accordion, stats, verses, compare, places, people and followups do NOT satisfy this on their own:
+   accordion, stats, verses, compare, places and people do NOT satisfy this on their own:
    they are reading material, not a picture. If you have written an answer and your block contains
    only those, you have not finished the block \u2014 add the graphical one that fits:
    - the logic of a passage (chosen -> predestined -> redeemed -> sealed) is a DIAGRAM;
@@ -8296,8 +8295,11 @@ RULES
    yourself whether the reader is being told about something they could have been shown \u2014 and if
    so, show it. A Scripture study without a single picture or diagram is an incomplete answer.
    Only when NONE of those triggers applies should you fall back to accordion (depth the reader can
-   open) or followups (where to go next). Never invent facts, numbers or places to fill the block:
-   an accordion is always better than a made-up chart.
+   open). Never invent facts, numbers or places to fill the block: an accordion is always better than
+   a made-up chart.
+   NEVER add a list of suggested next questions. The app already shows its own GO DEEPER directions
+   beneath every answer, so a second "where to go next" section duplicates the interface — and those
+   slots are better spent on a picture, a diagram or depth.
 2. The prose must stand on its own. The block carries structure, never the answer itself.
 3. Never invent coordinates, images, dates, distances, quotations or citations you were not
    given. Leave a field out rather than guessing it.
@@ -8576,8 +8578,11 @@ function glFollowups(c,title){
 
 const GENUI_BUILDERS={
   timeline:glTimeline, stats:glStats, compare:glCompare, verses:glVerses, chart:glChart,
-  diagram:glFlow, flow:glFlow, places:glPlaces, people:glPeople, accordion:glAccordion,
-  followups:glFollowups, questions:glFollowups
+  diagram:glFlow, flow:glFlow, places:glPlaces, people:glPeople, accordion:glAccordion
+  // followups/questions deliberately NOT registered: the app already shows its own GO DEEPER
+  // directions under every answer, and the model's suggested-questions list rendered as a second
+  // section ("WHERE TO GO NEXT" above "GO DEEPER" on the user's screenshot). glFollowups stays in
+  // the file so this decision is one line to reverse.
 };
 
 function sanitizeGenUI(raw){
@@ -8669,7 +8674,7 @@ async function genuiEnsure(el,prose,full){
     const j=await callJSON(
       [{role:'user',content:'An answer a reader just received:\n"""'+String(prose).slice(0,2400)+'"""\n\nReturn the visual layer for that answer.'}],
       GENUI_SYS+'\nReturn ONLY the JSON object {"components":[...]} and nothing else: no prose, no fence, no '
-       +'explanation. At least one component, at most 5, drawn only from the vocabulary above, and AT LEAST ONE of them GRAPHICAL (figure, map, chart, tree, diagram or timeline) — a block of only accordion, stats, verses, compare, places, people or followups still counts as having no picture. Use only what the '
+       +'explanation. At least one component, at most 5, drawn only from the vocabulary above, and AT LEAST ONE of them GRAPHICAL (figure, map, chart, tree, diagram or timeline) — a block of only accordion, stats, verses, compare, places or people still counts as having no picture, and never include a list of suggested questions because the app shows its own. Use only what the '
        +'answer itself supports \u2014 never invent facts, numbers, places or titles.',
       {maxTokens:1200,timeoutMs:30000});
     const comps=sanitizeGenUI(genuiNormalizeSpec(j));

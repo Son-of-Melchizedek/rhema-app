@@ -8274,6 +8274,26 @@ RULES
      a diagram instead of describing the shape in prose.
    - The answer weighs two or more views, persons, books or practices -> include a compare.
    - The answer has a sequence of events -> include a timeline.
+   AT LEAST ONE COMPONENT MUST BE GRAPHICAL \u2014 a figure, map, chart, tree, diagram or timeline.
+   accordion, stats, verses, compare, places, people and followups do NOT satisfy this on their own:
+   they are reading material, not a picture. If you have written an answer and your block contains
+   only those, you have not finished the block \u2014 add the graphical one that fits:
+   - the logic of a passage (chosen -> predestined -> redeemed -> sealed) is a DIAGRAM;
+   - the grammatical structure of a passage (main clause, subordinate clauses, participles) is a TREE;
+   - a chain of events or a life is a TIMELINE;
+   - anything over a map is a MAP and anything counted is a CHART.
+   PICTURES ARE EXPECTED, NOT A BONUS. Reach for a figure whenever the passage has any real-world
+   anchor, and one almost always does:
+   - the city or region a letter was sent to (Ephesians -> Ephesus, Romans -> Rome, Philippians ->
+     Philippi, Galatians -> Galatia, 1 Peter -> Asia Minor);
+   - a manuscript or artefact witness to the text (Papyrus 46, Codex Sinaiticus, Codex Vaticanus,
+     the Dead Sea Scrolls);
+   - a person named in the passage (Timothy, Onesimus, Phoebe, Priscilla and Aquila);
+   - an object, plant, animal, coin, building or site the passage turns on (Crown of thorns,
+     Denarius, Mustard seed, Areopagus, Temple of Artemis).
+   Give each as its exact Wikipedia article title. If your block has no figure and no map, ask
+   yourself whether the reader is being told about something they could have been shown \u2014 and if
+   so, show it. A Scripture study without a single picture or diagram is an incomplete answer.
    Only when NONE of those triggers applies should you fall back to accordion (depth the reader can
    open) or followups (where to go next). Never invent facts, numbers or places to fill the block:
    an accordion is always better than a made-up chart.
@@ -8520,7 +8540,7 @@ function glAccordion(c,title){
   const items=genuiArr(c.items).filter(function(it){return it&&typeof it==='object'&&(it.heading||it.title);});
   if(!items.length)return null;
   const box=genuiEl('div','genui-comp');
-  box.appendChild(genuiEl('div','genui-title',title||'Go deeper'));
+  box.appendChild(genuiEl('div','genui-title',title||'More on this'));
   items.forEach(function(it){
     const wrap=genuiEl('div','gl-acc');
     const h=genuiEl('button','gl-acc-h');
@@ -8567,7 +8587,11 @@ function sanitizeGenUI(raw){
     const type=String(c.type||'').toLowerCase().trim();
     const build=GENUI_BUILDERS[type];
     if(!build)return;                                   // unknown type: dropped, never guessed
-    const title=genuiStr(c.title,GENUI_LIMITS.head);
+    // The directions control under the answer is already headed "GO DEEPER"; a component titled the
+    // same thing reads as a duplicate section (it was visible in a screenshot as two GO DEEPERS).
+    // Strip that title so each component falls back to its own distinct heading.
+    let title=genuiStr(c.title,GENUI_LIMITS.head);
+    if(/^go\s+deeper\b/i.test(title.trim()))title='';
     let el=null;
     try{el=build(c,title);}catch(_){el=null;}
     if(el)out.push(el);
@@ -8644,7 +8668,7 @@ async function genuiEnsure(el,prose,full){
     const j=await callJSON(
       [{role:'user',content:'An answer a reader just received:\n"""'+String(prose).slice(0,2400)+'"""\n\nReturn the visual layer for that answer.'}],
       GENUI_SYS+'\nReturn ONLY the JSON object {"components":[...]} and nothing else: no prose, no fence, no '
-       +'explanation. At least one component, at most 5, drawn only from the vocabulary above. Use only what the '
+       +'explanation. At least one component, at most 5, drawn only from the vocabulary above, and AT LEAST ONE of them GRAPHICAL (figure, map, chart, tree, diagram or timeline) — a block of only accordion, stats, verses, compare, places, people or followups still counts as having no picture. Use only what the '
        +'answer itself supports \u2014 never invent facts, numbers, places or titles.',
       {maxTokens:1200,timeoutMs:30000});
     const comps=sanitizeGenUI(genuiNormalizeSpec(j));
@@ -8772,7 +8796,10 @@ function glTimelineAdv(c,title){
   if(items.length>1){
     const wrap=genuiEl('div','gl-scrub');
     const range=document.createElement('input');
-    range.type='range';range.min='1';range.max=String(items.length);range.value=String(items.length);
+    // Start at the FIRST event, not the last: opening at the right end meant the whole timeline was
+    // already revealed, so there was nothing to discover. Starting at the left lets the reader drag
+    // through the sequence and watch it unfold.
+    range.type='range';range.min='1';range.max=String(items.length);range.value='1';
     range.className='gl-scrub-range';
     range.setAttribute('aria-label','Move through the timeline');
     const label=genuiEl('div','gl-scrub-label','');

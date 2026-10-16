@@ -7674,10 +7674,34 @@ async function sendChat(){
     const msgs=chatHistory.slice(-6);
     const sys=CHAT_SYS+'\nThink briefly if helpful, then answer completely and directly.';
     let fullReply='';
-    await callAI(msgs,sys,chunk=>{
-      fullReply+=chunk;
-      typingEl.querySelector('.chat-bubble').innerHTML=formatChatReply(fullReply);
-    },2048,chatModel(),null,45000,true,reasoningBudget(raw));
+    // Paint coalescing. The old callback ran the entire markdown pipeline over the GROWING
+    // answer and rewrote the bubble on every chunk — roughly O(n^2) main-thread work, and a
+    // 6 KB answer arrives in ~300 chunks. Text that lands faster than it can be read does not
+    // need a repaint per chunk: one paint per ~80 ms shows the reader the same thing.
+    let paintTimer=null, paintPending=false;
+    const paintNow=function(){
+      if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
+      paintPending=false;
+      const b=typingEl.querySelector('.chat-bubble');
+      if(b)b.innerHTML=formatChatReply(fullReply);
+      const m=document.getElementById('chat-messages');
+      if(m)m.scrollTop=m.scrollHeight;
+    };
+    const paintSoon=function(){
+      if(paintPending)return;
+      paintPending=true;
+      paintTimer=setTimeout(paintNow,80);
+    };
+    try{
+      await callAI(msgs,sys,chunk=>{
+        fullReply+=chunk;
+        paintSoon();
+      },2048,chatModel(),null,45000,true,reasoningBudget(raw));
+    }finally{
+      // Flush before anything appends into the bubble: a late timer would otherwise rewrite
+      // innerHTML over the save/deeper controls that get added next.
+      paintNow();
+    }
     typingEl.className = 'chat-msg chat-msg-ai';
     if(!fullReply.trim()){
       typingEl.querySelector('.chat-bubble').textContent = 'No response received — the model returned empty. Check provider, model name, and balance in Settings.';
@@ -7930,6 +7954,11 @@ function studyDeepenInAsk(mode){
   const ref=book[0]+' '+S.sel.ch+':'+S.sel.v;
   const text=S.sel.text||'';
   const label=(STUDY_LABELS[mode]||mode);
+  // The panel is a full-screen overlay: go('chat') switches the tab UNDERNEATH it, so without
+  // this the reader is left staring at the study sheet. closeStudyPanel also bumps studyGen,
+  // which cancels an in-flight study write; it clears only _loading, so the answer we just
+  // read survives (it is read above, before this call).
+  closeStudyPanel(false);
   askFollowUp('[Continuing a STUDY answer \u2014 go deeper, do not repeat it]\nPassage: '+ref+' \u2014 "'+text+'"\nStudy mode: '+label
     +'\nThe study answer so far: "'+String(content).slice(0,700)+'"',
     'Continue this '+String(label).toLowerCase()+' in far greater detail \u2014 add the layers, background and connections the study answer left out, and show me what I am missing.');

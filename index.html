@@ -1114,8 +1114,8 @@ img{ -webkit-user-drag:none; }
 #screen-chat.chips-idle #chat-context-bar{display:none!important;}
 
 /* jump-to-latest, shown only when the reader has scrolled away during a stream */
-.chat-jump{position:fixed;right:14px;bottom:calc(var(--tabbar-h) + 96px + env(safe-area-inset-bottom,0px));z-index:45;display:none;font-size:11px;letter-spacing:0.3px;color:var(--gold);background:var(--elev);border:1px solid var(--border-med);border-radius:999px;padding:8px 12px;min-height:36px;box-shadow:0 4px 14px rgba(0,0,0,0.35);}
-.chat-jump.on{display:block;animation:glFade 0.22s ease;}
+.chat-jump{position:fixed;right:16px;bottom:calc(var(--tabbar-h) + 96px + env(safe-area-inset-bottom,0px));z-index:45;display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:17px;line-height:1;color:var(--gold);background:var(--elev);border:1px solid var(--border-med);border-radius:50%;padding:0;box-shadow:0 4px 14px rgba(0,0,0,0.38);}
+.chat-jump.on{display:flex;animation:glFade 0.22s ease;}
 
 /* ══ GENUI ADVANCED: tap-for-detail, scrubber, map, trees, graphs, harmony ═══════════ */
 /* shared tap affordance */
@@ -8102,7 +8102,8 @@ function chatJumpEl(show){
   if(!b){
     b=document.createElement('button');
     b.id='chat-jump';b.type='button';b.className='chat-jump';
-    b.textContent='\u2193 New text';
+    b.textContent='\u2193';
+    b.setAttribute('aria-label','Jump to the newest text');
     b.onclick=function(){chatScrollToBottom(true);};
     sc.appendChild(b);            // position:fixed, so it adds nothing to the scroll height
   }

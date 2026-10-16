@@ -8737,26 +8737,34 @@ async function genuiEnsurePicture(el,prose){
       {maxTokens:400,timeoutMs:25000});
     let comps=sanitizeGenUI(genuiNormalizeSpec(j)).filter(genuiIsPictureEl).slice(0,1);
     clearPend();
-    // Last resort, app-side: if none of the model's subjects has an image, picture the BOOK being
-    // studied (e.g. Ephesians -> "Epistle to the Ephesians", which resolves). It is accurate and
-    // clearly labelled, and it means a passage study is not left without a picture because the
-    // model named something abstract.
+    // Does anything the model offered actually resolve to an image? (The component can exist while
+    // every subject fails, in which case fail-closed has already removed the cards.)
+    let ok=false;
     if(comps.length){
       const items=comps[0].querySelectorAll('.gl-fig');
-      let ok=false;
       for(let i=0;i<items.length;i++){
-        const probe=await wikiResolve((items[i].dataset.subject||''));
+        const probe=await wikiResolve(items[i].dataset.subject||'');
         if(probe&&probe.img){ok=true;break;}
       }
-      if(!ok&&typeof S!=='undefined'&&S.book>=0&&ALL_BOOKS[S.book]){
-        const bookName=ALL_BOOKS[S.book][0];
-        const asBook='Epistle to the '+bookName;
-        const cand=[asBook,'Book of '+bookName,bookName];
-        for(let i=0;i<cand.length;i++){
-          const r2=await wikiResolve(cand[i]);
+    }
+    // Last resort, app-side: picture a book the ANSWER ITSELF names (e.g. an answer citing Romans
+    // 3:24 -> "Epistle to the Romans", which resolves). Derived from the prose on purpose: using the
+    // reader's current position would attach an unrelated book to the answer, which is the kind of
+    // mislabelling this whole design refuses to do. If the answer names no book, show nothing.
+    if(!ok){
+      const named=[];
+      for(let i=0;i<ALL_BOOKS.length&&named.length<2;i++){
+        const nm=ALL_BOOKS[i][0];
+        if(nm&&new RegExp('(^|[^A-Za-z])'+nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^A-Za-z]|$)').test(txt))named.push(nm);
+      }
+      for(let i=0;i<named.length&&!ok;i++){
+        const nm=named[i];
+        const cand=['Epistle to the '+nm,'Book of '+nm,nm];
+        for(let c=0;c<cand.length;c++){
+          const r2=await wikiResolve(cand[c]);
           if(r2&&r2.img){
-            comps=[glFigure({items:[{subject:cand[i],caption:'The book being studied'}]},'From the text')];
-            break;
+            comps=[glFigure({items:[{subject:cand[c],caption:'The book this answer is drawn from'}]},'From the text')];
+            ok=true;break;
           }
         }
       }

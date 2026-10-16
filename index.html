@@ -1113,6 +1113,10 @@ img{ -webkit-user-drag:none; }
 #screen-chat.chips-idle .chat-quick-chips{opacity:0;transform:translateX(-50%) translateY(14px);pointer-events:none;}
 #screen-chat.chips-idle #chat-context-bar{display:none!important;}
 
+/* jump-to-latest, shown only when the reader has scrolled away during a stream */
+.chat-jump{position:fixed;right:14px;bottom:calc(var(--tabbar-h) + 96px + env(safe-area-inset-bottom,0px));z-index:45;display:none;font-size:11px;letter-spacing:0.3px;color:var(--gold);background:var(--elev);border:1px solid var(--border-med);border-radius:999px;padding:8px 12px;min-height:36px;box-shadow:0 4px 14px rgba(0,0,0,0.35);}
+.chat-jump.on{display:block;animation:glFade 0.22s ease;}
+
 /* ══ GENUI ADVANCED: tap-for-detail, scrubber, map, trees, graphs, harmony ═══════════ */
 /* shared tap affordance */
 .gl-tap{position:relative;cursor:pointer;transition:background 0.18s ease;}
@@ -7784,9 +7788,15 @@ function goToVerse(bi,ch,vn){
 // ── CHAT ─────────────────────────────────────────────────────────
 const CHAT_SYS = `You are Rhema, a careful Bible study companion. You help people understand Scripture with humility and precision. You draw from biblical languages (Hebrew, Greek, Aramaic), typology, hermeneutics, and sound theology.
 
-CRITICAL RULE: Answer ONLY what the user asked about. Go as deep as possible on that specific topic. Do NOT add sections, lenses, or analyses the user didn't request. If they ask about the Greek, give only Greek — don't add application, kingdom lens, or cross-references. If they ask a specific question, answer that question thoroughly and stop.
+CRITICAL RULE: Answer ONLY what the user asked about. Go deep on that specific topic, but depth means precision, not volume — cover it completely and then stop. The length ceiling below is a hard limit, not a preference. Do NOT add sections, lenses, or analyses the user didn't request. If they ask about the Greek, give only Greek — don't add application, kingdom lens, or cross-references. If they ask a specific question, answer that question thoroughly and stop.
 
 Your responses should be like a world-class scholar who has been asked one precise question — you answer it completely, then you're silent. No gratuitous structure, no unsolicited sections.
+
+LENGTH — HARD CEILING OF 450 WORDS. Measured behaviour says a soft target does not work, so treat this as a limit, not a preference. Keep the prose under about 450 words (roughly 2,800 characters) and ideally 250-350. Before you write the visual block, check your prose: if it runs longer, delete the paragraph that carries the least weight, the sentence that restates the question, and every clause that repeats a point already made. Long prose is a failure here, not thoroughness — and anything you were about to list belongs in the components, so prose that duplicates them is wasted twice. The only exceptions are a request for a full treatment of a chapter, a survey, or a hard objection.
+
+SAY IT ONLY IF PROSE IS THE RIGHT MEDIUM. Chronology, contrasts, places, numbers, structures, participants and lists belong in the visual layer below, not spelled out in sentences.
+
+NEVER ANSWER A LISTING QUESTION WITH A LIST. If the user asks for a chronology, a set of places, a set of facts, or a comparison, the enumeration goes into components and the prose keeps only the reasoning and the meaning. A prose list is the single biggest source of padding in an answer — and it is the case where prose is the wrong medium even though it feels natural. Measured consequence: answers that enumerate in prose run long no matter how the rest is trimmed.
 
 ABSOLUTE AUTHORITY — THE BIBLE IS THE SOURCE OF TRUTH. This app is a Bible study tool. You answer ALL questions from the Bible first, then from trusted commentaries and historical reports (Church Fathers, Reformation writers, conservative scholarship). You do NOT treat other religious texts as equal or authoritative. Your worldview is Christian, your foundation is Scripture.
 
@@ -7794,7 +7804,7 @@ REFUSAL POLICY: If a user asks about the Quran, Hindu texts (Vedas, Upanishads, 
 
 For atheist/secular challenges: If someone asks "but what does science say" or "that's a myth like other religions" or similar skeptical framing — you answer from Scripture confidently and directly. You do not concede ground. You do not say "some believe this while others believe that." Your stance is that Scripture is the ultimate authority. Answer from that position with warmth and conviction, not defensiveness.
 
-Be theologically sound (conservative, orthodox Protestant), warm, and direct. Depth over breadth every time.`;
+Be theologically sound (conservative, orthodox Protestant), warm, and direct. Depth over breadth every time — and depth is precision, not length: the 450-word prose ceiling holds in every answer that is not a full treatment.`;
 
 let chatHistory = [];
 
@@ -7843,7 +7853,7 @@ async function sendChat(){
   chatHistory.push({role:'user', content:userMsg});
   appendChatMsg('user', raw);
   const typingEl = appendTyping();
-  chatScrollToBottom();
+  chatScrollToBottom(true);      // the reader just acted: follow from here, whatever they were reading
   addXP(5);
 
   try {
@@ -7896,7 +7906,7 @@ async function sendChat(){
       const parsedReply=parseGenUI(fullReply);
       const proseReply=parsedReply.prose||fullReply;
       chatHistory.push({role:'assistant', content:proseReply});
-      try{attachGenUI(typingEl, fullReply);}catch(_){}
+      try{genuiEnsure(typingEl, proseReply, fullReply);}catch(_){}   // never ship a visual-less answer
       try{attachDeeperControls(typingEl, proseReply);}catch(_){}
       // Add save-to-notes button after streaming finishes
       (function(){
@@ -8074,12 +8084,50 @@ function askFollowUp(context, question){
 // The directions are fetched as soon as the answer lands, so they are already buttons by the
 // time the reader looks — no first tap to generate them. The button survives only as the
 // retry affordance if that call fails.
-function chatScrollToBottom(){
-  // `#chat-messages` is NOT a scroll container (measured: position static, scrollHeight ==
-  // clientHeight), so the old `msgs.scrollTop = msgs.scrollHeight` was a no-op and the chat
-  // never followed the answer. `.screen` is the scroller — flex:1 with overflow-y:auto.
+// ── scroll that yields to the reader ───────────────────────────────────────────────
+// The stream used to yank the view to the bottom on EVERY paint, so a reader who scrolled up to
+// the beginning was dragged back down and had to wait for the whole answer before they could read
+// any of it. Now the stream follows only while the reader is already at the bottom. Scrolling up
+// hands control over, and it is not taken back until they return to the bottom or ask for it —
+// which is what lets the reader start at the top while the rest is still arriving.
+let chatFollow=true;
+function chatAtBottom(sc,slack){
+  if(!sc)return true;
+  return (sc.scrollHeight-sc.clientHeight-sc.scrollTop)<=(slack||56);
+}
+function chatJumpEl(show){
   const sc=document.getElementById('screen-chat');
-  if(sc)sc.scrollTop=sc.scrollHeight;
+  if(!sc)return;
+  let b=document.getElementById('chat-jump');
+  if(!b){
+    b=document.createElement('button');
+    b.id='chat-jump';b.type='button';b.className='chat-jump';
+    b.textContent='\u2193 New text';
+    b.onclick=function(){chatScrollToBottom(true);};
+    sc.appendChild(b);            // position:fixed, so it adds nothing to the scroll height
+  }
+  b.classList.toggle('on',!!show);
+}
+function chatScrollToBottom(force){
+  // `#chat-messages` is NOT a scroll container (measured: position static, scrollHeight ==
+  // clientHeight), so `.screen` — flex:1 with overflow-y:auto — is the scroller.
+  const sc=document.getElementById('screen-chat');
+  if(!sc)return;
+  if(!force&&!chatFollow)return;
+  chatFollow=true;
+  sc.scrollTop=sc.scrollHeight;
+  chatJumpEl(false);
+}
+function chatWireFollow(){
+  const sc=document.getElementById('screen-chat');
+  if(!sc||sc.__followWired)return;
+  sc.__followWired=true;
+  sc.addEventListener('scroll',function(){
+    const at=chatAtBottom(sc);
+    if(at===chatFollow)return;
+    chatFollow=at;
+    chatJumpEl(!at);
+  },{passive:true});
 }
 function attachDeeperControls(el, answer){
   const bubble=el.querySelector('.chat-bubble');
@@ -8181,6 +8229,7 @@ function studyDeepenInAsk(mode){
 }
 
 try{wireChatComposer();}catch(_){}
+try{chatWireFollow();}catch(_){}     // stream follows only while the reader is at the bottom
 
 // The visual-layer contract. Kept as its own constant rather than inline in CHAT_SYS so the
 // vocabulary is reviewable in one place (the STUDY_SYS map is organised the same way).
@@ -8188,7 +8237,7 @@ const GENUI_SYS = `
 VISUAL LAYER — REQUIRED. Every answer you give ends with this block, without exception.
 After your answer you MAY add ONE fenced block that opens with a line of three backticks
 followed by genui, containing JSON. It must come LAST and must be valid JSON:
-  {"components":[ ...up to 4... ]}
+  {"components":[ ...up to 5... ]}
 Available component types — use ONLY these, and only their fields:
 - timeline: {"type":"timeline","title":"","items":[{"when":"AD 52","what":"","ref":"Acts 18:19"}]}
 - stats:    {"type":"stats","title":"","items":[{"value":"3 years","label":"time in Ephesus"}]}
@@ -8207,10 +8256,27 @@ Available component types — use ONLY these, and only their fields:
 - graph:    {"type":"graph","title":"","nodes":[{"id":"Paul","kind":"person"},{"id":"Ephesus","kind":"place"}],"edges":[{"from":"Paul","to":"Ephesus","label":"taught three years"}]}
 - harmony:  {"type":"harmony","title":"","columns":["Matthew","Mark","Luke","John"],"rows":[{"event":"","matthew":"27:11-14","mark":"15:2-5","luke":"23:2-5","john":"18:29-38"}]}
 RULES
-1. EVERY answer must include at least one component — the visual layer is never omitted. Pick
-   whichever genuinely teaches best. When nothing visual suits the subject, use accordion to hold
-   depth the reader can open, or followups for where to go next. Never invent facts, numbers or
-   places to fill the block: an accordion is always better than a made-up chart.
+1. EVERY answer must include at least one component, and most should carry 2-4. SHOW rather than
+   describe: a chronology becomes a timeline, a contrast becomes a compare, a structure becomes a
+   tree or diagram, a journey or a spread of churches becomes a map, numbers become a chart,
+   participants become people, and a real place, building, object or manuscript becomes a figure.
+   If the answer can be seen as well as read, add the visual — lean toward one MORE component than
+   your instinct suggests, and prefer an image or a diagram over another block of text. Let the
+   prose carry the reasoning and the nuance; let the components carry the scaffolding, so the eye
+   gets the shape before the sentences do.
+   EXPLICIT TRIGGERS \u2014 these are expected, not optional:
+   - The answer names a real place, building, object, manuscript or site -> include a figure for
+     the most important one. A subject that fails to resolve costs you one image and nothing else,
+     so never withhold a figure out of caution.
+   - The answer spans geography (a journey, letters to cities, the spread of the church) -> include
+     a map with a layer per journey or region.
+   - The answer explains a structure, an argument, a process or a causal chain -> include a tree or
+     a diagram instead of describing the shape in prose.
+   - The answer weighs two or more views, persons, books or practices -> include a compare.
+   - The answer has a sequence of events -> include a timeline.
+   Only when NONE of those triggers applies should you fall back to accordion (depth the reader can
+   open) or followups (where to go next). Never invent facts, numbers or places to fill the block:
+   an accordion is always better than a made-up chart.
 2. The prose must stand on its own. The block carries structure, never the answer itself.
 3. Never invent coordinates, images, dates, distances, quotations or citations you were not
    given. Leave a field out rather than guessing it.
@@ -8249,7 +8315,7 @@ RULES
 //   3. Nothing is invented on our side: no images, no coordinates, no citations we were not
 //      given. A component that cannot be built from the supplied data is dropped, not faked.
 // Ask only — Study keeps its own fixed section layout.
-const GENUI_LIMITS={components:4,items:10,str:280,label:60,head:90};
+const GENUI_LIMITS={components:5,items:10,str:280,label:60,head:90};
 
 function genuiClip(s,n){s=String(s==null?'':s).trim();return s.length>n?s.slice(0,n-1)+'\u2026':s;}
 function genuiStr(v,n){return genuiClip(v,n||GENUI_LIMITS.str);}
@@ -8540,6 +8606,56 @@ function genuiPending(){
 
 // Called once an answer finishes. Repaints the prose WITHOUT the spec block, then attaches the
 // components — so it must run before anything else appends into the bubble.
+// Guarantees the visual layer instead of hoping for it. Usually the block arrives with the
+// answer; when a run skips it (measured: it happens), this asks for the block ONCE more, from the
+// prose alone. Without this, "UI in every answer" was probabilistic — and a silently visual-less
+// answer is exactly the failure the reader would notice.
+// The model sometimes returns the spec as a bare array, or as a single component object, or
+// under a different key. All of those are the same intent; refusing them loses the visual for no
+// safety gain, since every candidate still has to pass sanitizeGenUI's allowlist.
+function genuiNormalizeSpec(o){
+  if(!o)return null;
+  if(Array.isArray(o))return {components:o};
+  if(Array.isArray(o.components))return o;
+  for(const k in o){
+    const v=o[k];
+    if(Array.isArray(v)&&v.length&&v[0]&&typeof v[0]==='object'&&v[0].type)return {components:v};
+  }
+  if(o.type)return {components:[o]};
+  return null;
+}
+
+async function genuiEnsure(el,prose,full){
+  let n=0;
+  try{n=attachGenUI(el,full);}catch(_){n=0;}
+  if(n)return n;
+  const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
+  if(!bubble||!prose||prose.length<120)return 0;
+  if(!bubble.querySelector('.gl-pending'))bubble.appendChild(genuiPending());
+  const clearPending=function(){const p=bubble.querySelector('.gl-pending');if(p)p.remove();};
+  try{
+    // GENUI_SYS goes in the system prompt: without the vocabulary the model invents type names
+    // (or returns the wrong shape entirely) and the retry is wasted.
+    const j=await callJSON(
+      [{role:'user',content:'An answer a reader just received:\n"""'+String(prose).slice(0,2400)+'"""\n\nReturn the visual layer for that answer.'},
+       GENUI_SYS+'\nReturn ONLY the JSON object {"components":[...]} and nothing else: no prose, no fence, no '
+       +'explanation. At least one component, at most 5, drawn only from the vocabulary above. Use only what the '
+       +'answer itself supports \u2014 never invent facts, numbers, places or titles.'],
+      {maxTokens:1200,timeoutMs:30000});
+    const comps=sanitizeGenUI(genuiNormalizeSpec(j));
+    clearPending();
+    if(comps.length){
+      const wrap=renderGenUI(comps);
+      // the deeper-directions block and the footer buttons are already in the bubble by now, so
+      // insert above them rather than below
+      const anchor=bubble.querySelector('.chat-deeper,.chat-save-btn');
+      if(anchor)bubble.insertBefore(wrap,anchor);else bubble.appendChild(wrap);
+      return comps.length;
+    }
+  }catch(_){clearPending();}
+  return 0;
+}
+
 function attachGenUI(el,text){
   const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
   if(!bubble)return 0;
@@ -8547,7 +8663,7 @@ function attachGenUI(el,text){
   const pending=bubble.querySelector('.gl-pending');
   if(pending)pending.remove();
   if(!parsed.spec){bubble.innerHTML=formatChatReply(genuiStripPartial(text));return 0;}
-  const comps=sanitizeGenUI(parsed.spec);
+  const comps=sanitizeGenUI(genuiNormalizeSpec(parsed.spec));
   // Safe: formatChatReply escapes &, < and > BEFORE applying its own markup, so model text can
   // never become tags here. Component content never passes through innerHTML at all — it is
   // built with createElement/textContent.

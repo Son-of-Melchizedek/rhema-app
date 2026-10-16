@@ -8630,17 +8630,22 @@ async function genuiEnsure(el,prose,full){
   try{n=attachGenUI(el,full);}catch(_){n=0;}
   if(n)return n;
   const bubble=el&&el.querySelector?el.querySelector('.chat-bubble'):null;
-  if(!bubble||!prose||prose.length<120)return 0;
+  if(!bubble||!prose)return 0;
+  // A short answer still deserves a visual, so the guard only skips the app's own error text and
+  // near-empty replies. A 120-char guard (the first version) silently denied the visual layer to
+  // every concise answer — the opposite of the requirement.
+  const proseTxt=String(prose).trim();
+  if(proseTxt.length<40||/^No response received/i.test(proseTxt))return 0;
   if(!bubble.querySelector('.gl-pending'))bubble.appendChild(genuiPending());
   const clearPending=function(){const p=bubble.querySelector('.gl-pending');if(p)p.remove();};
   try{
     // GENUI_SYS goes in the system prompt: without the vocabulary the model invents type names
     // (or returns the wrong shape entirely) and the retry is wasted.
     const j=await callJSON(
-      [{role:'user',content:'An answer a reader just received:\n"""'+String(prose).slice(0,2400)+'"""\n\nReturn the visual layer for that answer.'},
-       GENUI_SYS+'\nReturn ONLY the JSON object {"components":[...]} and nothing else: no prose, no fence, no '
+      [{role:'user',content:'An answer a reader just received:\n"""'+String(prose).slice(0,2400)+'"""\n\nReturn the visual layer for that answer.'}],
+      GENUI_SYS+'\nReturn ONLY the JSON object {"components":[...]} and nothing else: no prose, no fence, no '
        +'explanation. At least one component, at most 5, drawn only from the vocabulary above. Use only what the '
-       +'answer itself supports \u2014 never invent facts, numbers, places or titles.'],
+       +'answer itself supports \u2014 never invent facts, numbers, places or titles.',
       {maxTokens:1200,timeoutMs:30000});
     const comps=sanitizeGenUI(genuiNormalizeSpec(j));
     clearPending();

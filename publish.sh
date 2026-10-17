@@ -18,6 +18,27 @@ MODE="${1:-}"
 
 cp "$LIVE" "$REPO/index.html"
 
+# The first-run video and its poster are SIBLING files of the app, referenced relatively
+# (`<source src="rhema-intro.mp4">`). This script used to publish only the HTML, so the
+# deployed copy fell back to the inline canvas piece and nobody could tell: the app
+# degrades on a 404 by design. Whatever media the app references must ship with it.
+LIVE_DIR="$(dirname "$LIVE")"
+for asset in rhema-intro.mp4 rhema-intro-poster.jpg; do
+  if [[ -f "$LIVE_DIR/$asset" ]]; then
+    cp "$LIVE_DIR/$asset" "$REPO/$asset"
+    echo "synced $asset ($(stat -c%s "$LIVE_DIR/$asset") bytes)"
+  else
+    echo "WARNING: $LIVE_DIR/$asset missing — the deployed app will fall back to canvas"
+  fi
+done
+# Fail loudly rather than publishing a build whose video silently 404s.
+for asset in rhema-intro.mp4 rhema-intro-poster.jpg; do
+  if grep -q "$asset" "$REPO/index.html" && [[ ! -f "$REPO/$asset" ]]; then
+    echo "ERROR: index.html references $asset but it is not in the repo" >&2
+    exit 1
+  fi
+done
+
 if [[ "$MODE" == "--no-keys" ]]; then
   python3 "$REPO/scrub_keys.py" "$REPO"
 else

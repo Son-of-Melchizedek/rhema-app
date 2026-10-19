@@ -18,10 +18,22 @@ import sys
 
 # Shape-based patterns: provider key formats, not literal values.
 PATTERNS = [
-    re.compile(r"sk-[A-Za-z0-9_-]{20,}"),
+    re.compile(r"sk-[A-Za-z0-9_-]{20,}"),          # OpenAI-style, and covers sk-or-v1-… (OpenRouter)
     re.compile(r"ghp_[A-Za-z0-9]{20,}"),
     re.compile(r"AIza[0-9A-Za-z_-]{30,}"),
     re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}"),
+    # OpenCode Go keys look like oc_sk_… — NOT matched by the sk- pattern above, because the
+    # prefix is oc_sk_. Their absence let a live provider key reach the public page: the scrub
+    # "passed" because both the rewrite AND the survivor re-scan were blind to the format, so the
+    # check failed OPEN. Any new provider whose keys do not start with a pattern listed here has
+    # the same blind spot — confirm with the shape check in publish verification.
+    re.compile(r"oc_sk_[A-Za-z0-9_-]{10,}"),
+    re.compile(r"gsk_[A-Za-z0-9]{20,}"),           # Groq
+    re.compile(r"xai-[A-Za-z0-9]{20,}"),           # xAI
+    re.compile(r"gAAAA[A-Za-z0-9_-]{20,}"),        # Fernet-style blobs
+    # Catch-all: <something>_sk_<long token>. Deliberately after the specific patterns so a
+    # clearer match wins; exists so an unfamiliar vendor prefix cannot slip through again.
+    re.compile(r"[A-Za-z]{2,6}_sk_[A-Za-z0-9_-]{15,}"),
 ]
 
 # Tokens containing these markers are test fixtures, not credentials.

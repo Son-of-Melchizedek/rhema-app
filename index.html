@@ -1785,11 +1785,16 @@ img{ -webkit-user-drag:none; }
 // ── CONFIG ──────────────────────────────────────────────────────
 // This private APK preloads OpenCode Go / DeepSeek V4.1 Flash (fastest measured).
 // Other providers remain selectable in Settings.
-const DEFAULT_AI = { key:'sk-1dVSq8Eu9LSgLXNS4JAZS7DapdJ9dthst0YD0nGaQwZByZcRNjQYRMUFFZUplq6l', model:'deepseek-v4.1-flash', url:'https://opencode.ai/zen/go/v1' };
+// Keys that were shipped in an earlier build and are now dead. opencode.ai answers an
+// expired key with 401 {"code":"api_key_expired"}. repairProviderKey() treats one of these
+// as "must be replaced", so an install that still holds a dead key heals on next launch
+// without the reader touching Settings. Append here whenever the default key is rotated.
+const STALE_KEYS = [''];
+const DEFAULT_AI = { key:'oc_sk_cc54a87d1806_D_J1HGp81_aWKVLVt2QnbMEOw9kUdCfg', model:'deepseek-v4.1-flash', url:'https://opencode.ai/zen/go/v1' };
 const PROVIDERS = {
   nvidia:{url:'https://integrate.api.nvidia.com/v1',model:'z-ai/glm-5.2'},
   deepseek:{url:'https://api.deepseek.com/v1',model:'deepseek-v4-flash'},
-  openrouter:{url:'https://openrouter.ai/api/v1',model:'openai/gpt-4o-mini'},
+  openrouter:{url:'https://openrouter.ai/api/v1',model:'deepseek/deepseek-chat-v3.1'},
   anthropic:{url:'https://api.anthropic.com',model:'claude-sonnet-4-6'},
   openai:{url:'https://api.openai.com/v1',model:'gpt-4o-mini'},
   groq:{url:'https://api.groq.com/openai/v1',model:'llama-3.1-70b-versatile'},
@@ -5490,6 +5495,21 @@ async function repairAiTransport(){
   if(present)return 'proxy-present';
   S.directAI=true;
   const chosen=load('cx_provider_preset','');
+  // A browser cannot reach opencode.ai (preflight 404) or NVIDIA's catalog (blocks browser
+  // CORS). Send the browser to a provider that answers a preflight, keeping the reader's
+  // key when it belongs to that provider. The old fallback went to the DeepSeek preset,
+  // whose shipped key is a 402 Insufficient Balance, so the browser had no working provider.
+  const webBlind=S.baseUrl.includes('opencode.ai')||S.baseUrl.includes('integrate.api.nvidia.com');
+  if(webBlind&&typeof switchProviderForBrowser==='function'){
+    // Always a CORS-capable provider. Do NOT fall back to deepseek when no key ships: that
+    // preset's key answers 402 Insufficient Balance, so it looks like an app bug. With no key
+    // shipped the reader adds their own — and the 401/402 message below tells them to.
+    const target='openrouter';
+    if(switchProviderForBrowser(target)){
+      console.info('[ai] browser cannot reach '+S.baseUrl+' — routed to the '+target+' preset');
+      return 'direct';
+    }
+  }
   if(S.baseUrl.includes('opencode.ai')&&(chosen===''||chosen==='ocgo')){
     // Reuse the supported path: switchProvider stamps url+model+key TOGETHER (a preset that
     // forwards the previous origin's key 401s on every call).
@@ -6360,11 +6380,35 @@ async function runWithTimeout(work,timeout=30000){
   catch(e){if(controller.signal.aborted)throw new Error('Request timed out. Please try again.');throw e;}
   finally{clearTimeout(timer);}
 }
+// Swap a dead key for the current one. Returns true only when something actually changed,
+// so callers can retry exactly once and never loop.
+function repairDeadKey(){
+  const cur=String(S.apiKey||'');
+  if(!cur)return false;
+  const preset=PROVIDER_PRESETS.find(function(p){return p.url===String(S.baseUrl||'')&&p.key;});
+  const next=(preset&&preset.key)||DEFAULT_AI.key;
+  if(!next||next===cur)return false;
+  S.apiKey=next;storeSession('cx_key',next);storeSession('cx_key_origin',providerOrigin(S.baseUrl));saveS();
+  return true;
+}
 async function doFetch(url,opts){
-  const res=await fetch(url,opts);
+  let res=await fetch(url,opts);
+  // 401 = the shipped key was rotated at the provider. Repair in place and retry once, so a
+  // key rotation heals the app instead of breaking every AI feature until a new build lands.
+  if(res.status===401&&repairDeadKey()){
+    try{opts.headers.Authorization='Bearer '+S.apiKey;}catch(_){}
+    res=await fetch(url,opts);
+  }
   if(!res.ok){
     let detail='';try{const j=await res.json();detail=j.error?.message||j.message||JSON.stringify(j);}catch(_){try{detail=await res.text();}catch(__){}}
-    throw new Error(`HTTP ${res.status}${detail?': '+detail.slice(0,180):''}`);
+    // Name the cause when the app's OWN key is the problem. 'HTTP 402' alone sent the reader
+    // hunting for an app bug when the shipped key had simply run out of credit.
+    const shipped=[DEFAULT_AI.key].concat(PROVIDER_PRESETS.map(function(p){return p.key;}).filter(Boolean));
+    const usingShipped=shipped.indexOf(String(S.apiKey||''))>=0;
+    const hint=((res.status===401||res.status===402)&&usingShipped)
+      ?' \u2014 the app\'s built-in key is expired or out of credit. Paste your own key in Settings (base URL + key) to keep using AI.'
+      :(res.status===401?' \u2014 the provider rejected this key. Check it in Settings.':'');
+    throw new Error(`HTTP ${res.status}${detail?': '+detail.slice(0,180):''}${hint}`);
   }
   return res;
 }
@@ -11207,10 +11251,19 @@ function getTransSimilarity(id){
 // ── MODEL PROVIDER SETTINGS ─────────────────────────────────────
 // DeepSeek V4.1 Flash on OpenCode Go is the DEFAULT (fastest measured: ~2.7s to first words).
 // The other two presets stay selectable in Settings — each carries its OWN key.
+// Empty = ship no key. Fill with a SPEND-CAPPED OpenRouter key to make the published site
+// work with no setup; leave empty to keep the page key-free (readers paste their own).
+const BROWSER_AI_KEY = '';
+// A key the reader typed themselves. Shape identifies the provider deterministically,
+// so switching transport does not have to guess or discard their key.
+function keyLooksLikeOpenRouter(k){return /^sk-or-/.test(String(k||''));}
 const PROVIDER_PRESETS=[
-  {id:'ocgo',name:'OpenCode Go \u00b7 DeepSeek V4.1 Flash',url:'https://opencode.ai/zen/go/v1',model:'deepseek-v4.1-flash',key:'sk-1dVSq8Eu9LSgLXNS4JAZS7DapdJ9dthst0YD0nGaQwZByZcRNjQYRMUFFZUplq6l',note:'Default \u2014 fastest, ~2.7s to first words'},
-  {id:'deepseek',name:'DeepSeek V4 Flash (direct)',url:'https://api.deepseek.com/v1',model:'deepseek-v4-flash',key:'sk-2e37bafb949243318a9b1a9d38848b1a',note:'Original provider \u00b7 works in a plain browser'},
-  {id:'ocgo-glm',name:'OpenCode Go · GLM 5.3 Flash',url:'https://opencode.ai/zen/go/v1',model:'glm-5.3-flash',key:'sk-1dVSq8Eu9LSgLXNS4JAZS7DapdJ9dthst0YD0nGaQwZByZcRNjQYRMUFFZUplq6l',note:'Alternative model'},
+  // Browser-reachable on purpose: openrouter.ai answers a CORS preflight, opencode.ai does not.
+  // BROWSER_AI_KEY stays empty so nothing publishable carries a key; paste your own in Settings.
+  {id:'openrouter',name:'OpenRouter \u00b7 DeepSeek V3.1',url:'https://openrouter.ai/api/v1',model:'deepseek/deepseek-chat-v3.1',key:BROWSER_AI_KEY,note:'Works in a browser'},
+  {id:'ocgo',name:'OpenCode Go \u00b7 DeepSeek V4.1 Flash',url:'https://opencode.ai/zen/go/v1',model:'deepseek-v4.1-flash',key:'oc_sk_cc54a87d1806_D_J1HGp81_aWKVLVt2QnbMEOw9kUdCfg',note:'Default \u2014 fastest, ~2.7s to first words'},
+  {id:'deepseek',name:'DeepSeek V4 Flash (direct)',url:'https://api.deepseek.com/v1',model:'deepseek-v4-flash',key:'',note:'Original provider \u00b7 works in a plain browser'},
+  {id:'ocgo-glm',name:'OpenCode Go · GLM 5.3 Flash',url:'https://opencode.ai/zen/go/v1',model:'glm-5.3-flash',key:'oc_sk_cc54a87d1806_D_J1HGp81_aWKVLVt2QnbMEOw9kUdCfg',note:'Alternative model'},
 ];
 // Unusable-config repair: an opencode.ai model that reasons for 20-45s (MiMo v2.5)
 // blows the study timeout, so every study mode would die with "Could not load".
@@ -11236,6 +11289,18 @@ function renderModelSelector(){
     </button>`;
   }).join('');
 }
+// Switch to a browser-capable provider but KEEP a key the reader already entered for it.
+// switchProvider() clears the key for a preset that ships none (correct for presets, fatal here:
+// it would wipe the reader's own key and leave them with a provider they cannot authenticate to).
+function switchProviderForBrowser(id){
+  const preset=PROVIDER_PRESETS.find(function(p){return p.id===id;});
+  if(!preset)return false;
+  const mine=String(S.apiKey||'');
+  switchProvider(id);
+  const own=mine&&(keyLooksLikeOpenRouter(mine)&&preset.url.indexOf('openrouter')>-1);
+  if(own){S.apiKey=mine;storeSession('cx_key',mine);storeSession('cx_key_origin',providerOrigin(preset.url));saveS();}
+  return true;
+}
 function switchProvider(id){
   const preset=PROVIDER_PRESETS.find(p=>p.id===id);
   if(!preset)return;
@@ -11257,7 +11322,10 @@ function repairProviderKey(){
   if(!preset)return false;
   const foreign=!S.apiKey||(S.apiKey===DEFAULT_AI.key&&preset.key!==DEFAULT_AI.key);
   const wrongOrigin=loadSession('cx_key_origin','')!==providerOrigin(url);
-  if(!foreign&&!wrongOrigin)return false;
+  // A key from a previous build that the provider has since expired. Without this an
+  // installed device keeps sending a dead key forever and every AI call 401s.
+  const dead=STALE_KEYS.indexOf(String(S.apiKey||''))>=0;
+  if(!foreign&&!wrongOrigin&&!dead)return false;
   S.apiKey=preset.key;storeSession('cx_key',preset.key);storeSession('cx_key_origin',providerOrigin(url));
   return true;
 }

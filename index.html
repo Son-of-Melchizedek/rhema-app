@@ -378,7 +378,7 @@ input,textarea,select{font:inherit;}
 .chat-msg{margin-bottom:16px;}
 .chat-msg-user{display:flex;justify-content:flex-end;}
 .chat-msg-user .chat-bubble{background:var(--gold);color:#0B0C15;border-radius:18px 18px 4px 18px;padding:12px 16px;max-width:85%;font-size:var(--fs-4);line-height:1.5;}
-.chat-msg-ai .chat-bubble{background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 18px 4px;padding:16px 16px;font-family:'EB Garamond',serif;font-size:var(--fs-4);line-height:1.7;color:var(--text-1);}
+.chat-msg-ai .chat-bubble{background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 18px 4px;padding:16px 16px;font-family:'EB Garamond',serif;font-size:var(--fs-4);line-height:1.7;color:var(--text-1);max-width:74ch;}
 .chat-msg-ai .chat-ref{font-family:'Cinzel',serif;font-size:var(--fs-1);letter-spacing:2px;color:var(--gold);margin-bottom:8px;}
 .chat-typing{display:flex;gap:4px;align-items:center;padding:16px 16px;}
 .chat-typing span{width:6px;height:6px;background:var(--text-3);border-radius:50%;animation:typingDot 1.2s ease-in-out infinite;}
@@ -1061,7 +1061,7 @@ img{ -webkit-user-drag:none; }
   /* the composer carries an inline max-width:480px — only !important beats inline */
   #chat-input-area{max-width:760px!important;}
   
-  .chat-msg-ai .chat-bubble{max-width:100%;padding:20px 24px;}
+  .chat-msg-ai .chat-bubble{max-width:74ch;padding:20px 24px;}
   .chat-msg-user .chat-bubble{max-width:min(85%,560px);}
   #verse-actions{max-width:calc(100% - 64px);}
   .home-header,.plans-header,.notes-header,.settings-header{padding-left:40px;padding-right:40px;}
@@ -1113,19 +1113,19 @@ img{ -webkit-user-drag:none; }
    directions to continue, tapping one sends it as the next turn. Kept out of Study,
    where the bridge below does the same job from a study answer. */
 .chat-deeper{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
-.chat-deeper-head{font-size:10px;color:var(--text-3);letter-spacing:1.4px;margin-bottom:6px;}
+.chat-deeper-head{font-size:var(--fs-1);color:var(--text-3);letter-spacing:1.4px;margin-bottom:6px;}
 .chat-deeper-loading{font-size:var(--fs-2);color:var(--text-3);padding:8px 0;opacity:0.85;}
-.chat-deeper-btn{font-size:11px;color:var(--gold);padding:4px 10px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:8px;cursor:pointer;min-height:36px;letter-spacing:0.3px;}
+.chat-deeper-btn{font-size:var(--fs-2);color:var(--gold);padding:4px 10px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:var(--r-sm);cursor:pointer;min-height:36px;letter-spacing:0.3px;}
 .chat-deeper-btn:disabled{opacity:0.6;cursor:default;}
 .chat-deeper-opts{display:none;flex-direction:column;gap:6px;margin-top:8px;}
-.chat-deeper-chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%;padding:10px 12px;background:var(--elev);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;cursor:pointer;}
+.chat-deeper-chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%;padding:10px 12px;background:var(--elev);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:var(--r-md);cursor:pointer;}
 .chat-deeper-chip:active{background:var(--gold-dim);}
-.chat-deeper-chip .o-n{font-size:10px;color:var(--gold);letter-spacing:1px;}
+.chat-deeper-chip .o-n{font-size:var(--fs-1);color:var(--gold);letter-spacing:1px;}
 .chat-deeper-chip .o-t{font-size:var(--fs-3);color:var(--text-2);font-weight:600;}
 .chat-deeper-chip .o-w{font-size:var(--fs-2);color:var(--text-3);line-height:1.4;}
 
 /* ── STUDY: the bridge into Ask ───────────────────────────────────────────────── */
-.study-deeper-btn{margin-top:12px;width:100%;font-size:12px;color:var(--gold);padding:10px 12px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:10px;cursor:pointer;min-height:44px;letter-spacing:0.3px;}
+.study-deeper-btn{margin-top:12px;width:100%;font-size:var(--fs-3);color:var(--gold);padding:10px 12px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:var(--r-md);cursor:pointer;min-height:44px;letter-spacing:0.3px;}
 
 /* ── ASK: keep the quick chips and the context bar out of the way until the user
    actually means to type. Both are positioned above the composer, so on a phone
@@ -1136,7 +1136,7 @@ img{ -webkit-user-drag:none; }
 #screen-chat.chips-idle #chat-context-bar{display:none!important;}
 
 /* jump-to-latest, shown only when the reader has scrolled away during a stream */
-.chat-jump{position:fixed;right:16px;bottom:calc(var(--tabbar-h) + 96px + env(safe-area-inset-bottom,0px));z-index:45;display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:17px;line-height:1;color:var(--gold);background:var(--elev);border:1px solid var(--border-med);border-radius:50%;padding:0;box-shadow:0 4px 14px rgba(0,0,0,0.38);}
+.chat-jump{position:fixed;right:16px;bottom:calc(var(--tabbar-h) + 96px + env(safe-area-inset-bottom,0px));z-index:45;display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:var(--fs-5);line-height:1;color:var(--gold);background:var(--elev);border:1px solid var(--border-med);border-radius:50%;padding:0;box-shadow:0 4px 14px rgba(0,0,0,0.38);}
 .chat-jump.on{display:flex;animation:glFade 0.22s ease;}
 
 /* ══ GENUI ADVANCED: tap-for-detail, scrubber, map, trees, graphs, harmony ═══════════ */
@@ -1236,8 +1236,8 @@ img{ -webkit-user-drag:none; }
    No CDN is possible (CSP script-src 'self' 'unsafe-inline'), so every visual is hand-built
    from SVG and CSS, which is also why these read as one system with the app's own gauge. */
 .genui{margin-top:14px;display:flex;flex-direction:column;gap:12px;}
-.genui-comp{background:var(--elev);border:1px solid var(--border);border-radius:12px;padding:12px 12px 10px;}
-.genui-title{font-size:10px;letter-spacing:1.3px;color:var(--gold);margin-bottom:9px;text-transform:uppercase;}
+.genui-comp{background:var(--elev);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 12px 10px;}
+.genui-title{font-size:var(--fs-1);letter-spacing:1.3px;color:var(--gold);margin-bottom:9px;text-transform:uppercase;}
 .genui-note{font-size:var(--fs-1);color:var(--text-3);margin-top:8px;letter-spacing:0.2px;}
 
 /* timeline */
@@ -1345,24 +1345,24 @@ img{ -webkit-user-drag:none; }
 #intro-top{position:absolute;top:0;left:0;right:0;height:2px;background:rgba(200,168,75,.14);z-index:4;}
 #intro-top i{display:block;height:100%;width:0;background:var(--gold);transition:width .1s linear;}
 #intro-skip{position:absolute;z-index:5;top:calc(14px + env(safe-area-inset-top,0px));right:14px;
-  font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:var(--gold);
+  font-family:'Cinzel',serif;font-size:var(--fs-2);letter-spacing:2px;color:var(--gold);
   background:rgba(10,11,20,.66);border:1px solid rgba(200,168,75,.3);border-radius:999px;
   padding:0 16px;min-height:44px;display:flex;align-items:center;cursor:pointer;}
 #intro-skip:active{background:var(--gold-dim);}
 #intro-sound{position:absolute;z-index:5;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;
-  transform:translateX(-50%);font-family:'Cinzel',serif;font-size:11px;letter-spacing:1.6px;
+  transform:translateX(-50%);font-family:'Cinzel',serif;font-size:var(--fs-2);letter-spacing:1.6px;
   color:var(--text-2);background:rgba(10,11,20,.66);border:1px solid var(--border);
   border-radius:999px;padding:0 16px;min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;}
 #intro-sound.on{color:var(--gold);border-color:var(--border-med);}
 #intro-cta{position:absolute;z-index:6;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));
   transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .45s ease,transform .45s ease;
   background:linear-gradient(180deg,#E8D48A,#D9BE63 55%,#B9932F);color:#1a1406;
-  font-family:'Cinzel',serif;font-size:15px;font-weight:600;letter-spacing:1.6px;border:0;
+  font-family:'Cinzel',serif;font-size:var(--fs-4);font-weight:600;letter-spacing:1.6px;border:0;
   border-radius:999px;min-height:54px;padding:0 36px;cursor:pointer;
   box-shadow:0 12px 34px rgba(200,168,75,.34);}
 #intro-cta.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
 #intro-end{position:absolute;z-index:5;left:0;right:0;bottom:calc(34px + env(safe-area-inset-bottom,0px));
-  text-align:center;font-family:'EB Garamond',serif;font-size:12.5px;color:var(--text-3);
+  text-align:center;font-family:'EB Garamond',serif;font-size:var(--fs-3);color:var(--text-3);
   opacity:0;transition:opacity .45s ease;pointer-events:none;}
 #intro-end.show{opacity:1;}
 
@@ -1417,7 +1417,7 @@ img{ -webkit-user-drag:none; }
 </head>
 <body>
 <div id="app">
-<div id="preview-banner" style="display:none;background:var(--warfare);color:#fff;font-size:12px;line-height:1.5;padding:10px 16px;text-align:center;">⚠️ You're viewing this in a preview pane, which blocks external API calls. <b>Download this file and open it in your browser</b> for the Bible and AI to work.</div>
+<div id="preview-banner" style="display:none;background:var(--warfare);color:#fff;font-size:var(--fs-3);line-height:1.5;padding:10px 16px;text-align:center;">⚠️ You're viewing this in a preview pane, which blocks external API calls. <b>Download this file and open it in your browser</b> for the Bible and AI to work.</div>
 <nav id="tabbar">
   <button class="tab-btn active" id="tab-home" onclick="go('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><span class="tab-label">Home</span></button>
   <button class="tab-btn" id="tab-read" onclick="goRead()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg><span class="tab-label">Bible</span></button>
@@ -1432,12 +1432,12 @@ img{ -webkit-user-drag:none; }
   <button type="button" id="tour-nudge" onclick="startTour()">✨ New here? Take the 60-second tour</button>
   <div class="section-header"><span class="section-title" id="continue-section-title">CONTINUE READING</span></div>
   <button type="button" class="continue-card" onclick="goRead()"><div class="continue-ref" id="continue-ref">GENESIS 1</div><div class="continue-text" id="continue-text">"In the beginning God created the heavens and the earth..."</div><div class="continue-btn" id="continue-btn-label">Continue reading →</div></button>
-  <div class="section-header"><span class="section-title">YOUR PLANS</span><button type="button" style="font-size:12px;color:var(--gold);" onclick="go('plans')">See all</button></div>
-  <div class="plan-scroll" id="home-plans-scroll"><button type="button" class="plan-card-home plan-card-new" onclick="openNewPlan()"><span style="font-size:22px;">✦</span><span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;">NEW PLAN</span></button></div>
+  <div class="section-header"><span class="section-title">YOUR PLANS</span><button type="button" style="font-size:var(--fs-3);color:var(--gold);" onclick="go('plans')">See all</button></div>
+  <div class="plan-scroll" id="home-plans-scroll"><button type="button" class="plan-card-home plan-card-new" onclick="openNewPlan()"><span style="font-size:var(--fs-6);">✦</span><span style="font-family:'Cinzel',serif;font-size:var(--fs-2);letter-spacing:1px;">NEW PLAN</span></button></div>
   <div class="section-header"><span class="section-title">VERSE OF THE DAY</span></div>
-  <div style="margin:0 20px 24px;background:var(--elev);border-radius:16px;padding:20px;border:1px solid var(--border);">
-    <div id="votd-ref" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;"></div>
-    <div id="votd-text" style="font-family:'EB Garamond',serif;font-size:18px;font-style:italic;color:var(--text-1);line-height:1.7;margin-bottom:14px;"></div>
+  <div style="margin:0 20px 24px;background:var(--elev);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);">
+    <div id="votd-ref" style="font-family:'Cinzel',serif;font-size:var(--fs-1);letter-spacing:2px;color:var(--gold);margin-bottom:8px;"></div>
+    <div id="votd-text" style="font-family:'EB Garamond',serif;font-size:var(--fs-5);font-style:italic;color:var(--text-1);line-height:1.7;margin-bottom:14px;"></div>
     <button class="action-chip primary" onclick="studyVotd()">✦ Study this verse</button>
   </div>
   <!-- DAILY DEVOTIONAL -->
@@ -1448,11 +1448,11 @@ img{ -webkit-user-drag:none; }
        card collapses to a bare gold "Watch now" pill whenever a thumbnail fails.
        Set EXODUS_FEED_ON = true below to restore it. -->
   <div id="exodus-block" style="display:none;">
-  <div class="section-header" style="margin-top:8px;"><span class="section-title">Live from Exodus Church</span><span style="display:flex;align-items:center;gap:10px;"><button class="discover-group-refresh" onclick="refreshExodusFeed()" title="Refresh videos" style="font-size:12px;">⟳</button><a href="https://www.youtube.com/@exoduscochin" target="_blank" rel="noopener" style="font-size:12px;color:var(--gold);text-decoration:none;">Channel →</a></span></div>
+  <div class="section-header" style="margin-top:8px;"><span class="section-title">Live from Exodus Church</span><span style="display:flex;align-items:center;gap:10px;"><button class="discover-group-refresh" onclick="refreshExodusFeed()" title="Refresh videos" style="font-size:var(--fs-3);">⟳</button><a href="https://www.youtube.com/@exoduscochin" target="_blank" rel="noopener" style="font-size:var(--fs-3);color:var(--gold);text-decoration:none;">Channel →</a></span></div>
   <div id="exodus-live" style="margin:0 20px 10px;"></div>
   <div class="exodus-videos-label" id="exodus-videos-label" style="display:none;margin:14px 20px 8px 20px;"></div>
   <div id="exodus-strip" class="discover-scroll" style="padding:0 20px 6px;"></div>
-  <div id="exodus-note" style="font-size:10px;color:var(--text-3);margin:8px 20px 16px;display:none;line-height:1.5;"></div>
+  <div id="exodus-note" style="font-size:var(--fs-1);color:var(--text-3);margin:8px 20px 16px;display:none;line-height:1.5;"></div>
   </div><!-- /#exodus-block -->
 </div><!-- /#screen-home -->
 <!-- BIBLE READER -->
@@ -1467,7 +1467,7 @@ img{ -webkit-user-drag:none; }
     <div class="cmp-chips" id="cmp-chips"></div>
   </div>
   <div class="chapter-content" id="chapter-content"><div style="padding:40px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div></div></div>
-  <div class="chapter-nav-row"><button class="ch-nav-btn" id="prev-ch-btn" onclick="prevChapter()">← Previous</button><button class="ch-nav-btn verse-nav-btn" onclick="openVersePicker()" style="font-size:12px;letter-spacing:1px;">↕ Verse</button><button class="ch-nav-btn" id="next-ch-btn" onclick="nextChapter()">Next →</button></div>
+  <div class="chapter-nav-row"><button class="ch-nav-btn" id="prev-ch-btn" onclick="prevChapter()">← Previous</button><button class="ch-nav-btn verse-nav-btn" onclick="openVersePicker()" style="font-size:var(--fs-3);letter-spacing:1px;">↕ Verse</button><button class="ch-nav-btn" id="next-ch-btn" onclick="nextChapter()">Next →</button></div>
   <div class="chapter-float-arrows" id="float-arrows"><button class="float-arrow" aria-label="Previous chapter" onclick="prevChapter()">←</button><button class="float-arrow" aria-label="Next chapter" onclick="nextChapter()">→</button></div>
 </div>
 <!-- PLANS -->
@@ -1476,7 +1476,7 @@ img{ -webkit-user-drag:none; }
   <div id="plans-list"></div>
   <button type="button" class="new-plan-btn" id="new-plan-btn" onclick="openNewPlan()"><span class="new-plan-btn-label">✦ Create New Plan</span><span class="new-plan-btn-sub">AI designs your custom reading journey</span></button>
   <div class="plan-gen-panel" id="plan-gen-panel">
-    <div class="plan-gen-label" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--text-3);margin-bottom:8px;">QUICK TOPICS</div>
+    <div class="plan-gen-label" style="font-family:'Cinzel',serif;font-size:var(--fs-1);letter-spacing:2px;color:var(--text-3);margin-bottom:8px;">QUICK TOPICS</div>
     <div class="plan-topic-chips" id="plan-topic-chips" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;">
       <button type="button" class="plan-topic-chip" onclick="pickPlanTopic('Business')">💼 Business</button>
       <button type="button" class="plan-topic-chip" onclick="pickPlanTopic('Prosperity')">🌿 Prosperity</button>
@@ -1490,7 +1490,7 @@ img{ -webkit-user-drag:none; }
       <input type="number" class="plan-gen-days" id="plan-days" aria-label="Number of days" value="7" min="3" max="7" placeholder="Days">
       <button class="plan-gen-submit" id="gen-btn" onclick="generatePlan()">GENERATE PLAN →</button>
     <div id="plan-gen-skeleton" aria-hidden="true" style="display:none;margin-top:12px;"></div>
-    <div id="plan-gen-error" role="status" aria-live="polite" style="display:none;margin-top:12px;padding:12px 14px;border:1px solid var(--warfare);border-radius:12px;background:var(--elev);"></div>
+    <div id="plan-gen-error" role="status" aria-live="polite" style="display:none;margin-top:12px;padding:12px 14px;border:1px solid var(--warfare);border-radius:var(--r-md);background:var(--elev);"></div>
     </div>
   </div>
   <div id="plan-day-view" style="display:none;"></div>
@@ -1503,7 +1503,7 @@ img{ -webkit-user-drag:none; }
     <div class="courses-sub">Learn any topic with the Bible as your textbook — short sample courses to start, or create your own multi-week course.</div>
     <div class="course-scroll" id="courses-list"></div>
     <div class="course-gen-panel" id="course-gen-panel">
-      <div class="plan-gen-label" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--text-3);margin-bottom:8px;">WHAT DO YOU WANT TO LEARN?</div>
+      <div class="plan-gen-label" style="font-family:'Cinzel',serif;font-size:var(--fs-1);letter-spacing:2px;color:var(--text-3);margin-bottom:8px;">WHAT DO YOU WANT TO LEARN?</div>
       <input type="text" class="course-gen-input" id="course-topic" aria-label="Course topic" placeholder="e.g. faith under pressure, the Holy Spirit, biblical finance, prayer, marriage…" maxlength="120">
       <div class="course-depth-row" role="radiogroup" aria-label="Course depth">
         <button type="button" class="course-depth-chip active" data-depth="standard" onclick="pickCourseDepth('standard',this)">Standard</button>
@@ -1520,7 +1520,7 @@ img{ -webkit-user-drag:none; }
   <div class="discover" id="discover">
     <div class="discover-title-row">
       <span class="discover-title">DISCOVER</span>
-      <span style="font-size:10px;color:var(--text-3);">opens in YouTube</span>
+      <span style="font-size:var(--fs-1);color:var(--text-3);">opens in YouTube</span>
     </div>
     <div class="discover-sub">Curated Bible videos, animated overviews &amp; sermons — tap a card to watch.</div>
     <div id="discover-groups"></div>
@@ -1565,11 +1565,11 @@ img{ -webkit-user-drag:none; }
 <!-- CHAT -->
 <div id="screen-chat" class="screen">
   <div class="settings-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-    <button onclick="goRead()" style="display:flex;align-items:center;gap:4px;min-height:44px;padding:6px 10px;font-size:14px;color:var(--gold);flex-shrink:0;">‹ Bible</button>
+    <button onclick="goRead()" style="display:flex;align-items:center;gap:4px;min-height:44px;padding:6px 10px;font-size:var(--fs-4);color:var(--gold);flex-shrink:0;">‹ Bible</button>
     <h2 class="settings-title" style="flex:1;text-align:center;">Ask Rhema</h2>
-    <button onclick="clearChat()" style="font-size:13px;color:var(--text-3);padding:6px 10px;min-height:44px;flex-shrink:0;">Clear</button>
+    <button onclick="clearChat()" style="font-size:var(--fs-3);color:var(--text-3);padding:6px 10px;min-height:44px;flex-shrink:0;">Clear</button>
   </div>
-  <div id="chat-context-bar" style="display:none;margin:0 16px 8px;padding:10px 14px;background:var(--elev);border-radius:10px;border-left:3px solid var(--gold);font-size:12px;color:var(--text-2);"></div>
+  <div id="chat-context-bar" style="display:none;margin:0 16px 8px;padding:10px 14px;background:var(--elev);border-radius:var(--r-md);border-left:3px solid var(--gold);font-size:var(--fs-3);color:var(--text-2);"></div>
   <div id="chat-messages" style="padding:0 16px 150px;min-height:200px;"></div>
   <div class="chat-quick-chips" id="chat-chips">
     <button class="chat-chip" onclick="sendQuick('Give me a full theological overview of the verse I am currently reading.')">Overview</button>
@@ -1584,8 +1584,8 @@ img{ -webkit-user-drag:none; }
   </div>
   <div id="chat-input-area" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);padding:10px 16px 4px;border-top:1px solid var(--border);z-index:50;">
     <div style="display:flex;gap:8px;align-items:flex-end;">
-      <textarea id="chat-input" aria-label="Ask Rhema about Scripture" rows="1" placeholder="Ask about Scripture…" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 16px;color:var(--text-1);font-size:16px;resize:none;max-height:120px;min-height:50px;line-height:1.5;" onkeydown="chatKeydown(event)" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
-      <button onclick="sendChat()" style="background:var(--gold);color:#0B0C15;border-radius:14px;padding:0 20px;min-height:50px;font-weight:600;font-size:15px;flex-shrink:0;">Send</button>
+      <textarea id="chat-input" aria-label="Ask Rhema about Scripture" rows="1" placeholder="Ask about Scripture…" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:13px 16px;color:var(--text-1);font-size:16px;resize:none;max-height:120px;min-height:50px;line-height:1.5;" onkeydown="chatKeydown(event)" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      <button onclick="sendChat()" style="background:var(--gold);color:#0B0C15;border-radius:var(--r-lg);padding:0 20px;min-height:50px;font-weight:600;font-size:var(--fs-4);flex-shrink:0;">Send</button>
     </div>
   </div>
 </div>
@@ -1598,7 +1598,7 @@ img{ -webkit-user-drag:none; }
     <textarea id="note-edit-input" aria-label="Edit note" class="plan-gen-input" style="margin:16px 20px;min-height:120px;resize:vertical;"></textarea>
     <div style="display:flex;gap:10px;padding:0 20px;">
       <button onclick="saveNoteEdit()" class="notes-export-btn" style="flex:1;padding:14px;">Save</button>
-      <button onclick="closeNoteEdit()" style="flex:1;padding:14px;border:1px solid var(--border);border-radius:10px;color:var(--text-2);min-height:48px;">Cancel</button>
+      <button onclick="closeNoteEdit()" style="flex:1;padding:14px;border:1px solid var(--border);border-radius:var(--r-md);color:var(--text-2);min-height:48px;">Cancel</button>
     </div>
   </div>
 </div>
@@ -1631,7 +1631,7 @@ img{ -webkit-user-drag:none; }
       <div class="setting-group-label">THEME</div>
       <div class="theme-grid" id="theme-picker"></div>
       <div class="setting-row" style="margin-top:8px;"><div><div class="setting-label">Dark mode</div><div class="setting-sub">Toggles light / dark for the chosen theme</div></div><button type="button" class="setting-toggle on" id="dark-toggle" aria-label="Toggle dark mode" aria-pressed="true" onclick="toggleDark()"></button></div>
-      <div class="setting-row"><div><div class="setting-label">Font size</div><div class="setting-sub" id="fontsize-label">Medium</div></div><div style="display:flex;gap:6px;"><button class="notes-export-btn" onclick="setFontSize(-1)" style="width:44px;height:44px;font-size:14px;">A−</button><button class="notes-export-btn" onclick="setFontSize(1)" style="width:44px;height:44px;font-size:18px;">A+</button></div></div>
+      <div class="setting-row"><div><div class="setting-label">Font size</div><div class="setting-sub" id="fontsize-label">Medium</div></div><div style="display:flex;gap:6px;"><button class="notes-export-btn" onclick="setFontSize(-1)" style="width:44px;height:44px;font-size:var(--fs-4);">A−</button><button class="notes-export-btn" onclick="setFontSize(1)" style="width:44px;height:44px;font-size:var(--fs-5);">A+</button></div></div>
       <div class="setting-row"><div><div class="setting-label">Translation</div><div class="setting-sub">Public domain versions</div></div><select class="setting-select" id="trans-select" aria-label="Bible translation" onchange="setTranslation(this.value)"><option value="BSB">BSB</option></select></div>
     </div>
     <div class="setting-group">
@@ -1651,30 +1651,30 @@ img{ -webkit-user-drag:none; }
       <div class="setting-row"><div><div class="setting-label">API Key</div><div class="setting-sub">OpenCode Go key preloaded in this private APK</div></div><input class="setting-input" id="api-key-input" aria-label="API key" type="password" placeholder="Paste provider API key" onchange="saveApiSettings();maybeRefreshModels()"></div>
       <div class="setting-row"><div><div class="setting-label">Model</div><div class="setting-sub" id="model-status">Paste a key, then refresh models</div></div><input class="setting-input" id="model-input" aria-label="Model" placeholder="Model id" onchange="saveApiSettings()"></div>
       <div style="display:flex;gap:8px;padding:8px 0 0;">
-        <select class="setting-select" id="model-select" aria-label="Available models" onchange="pickModel(this.value)" style="flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--gold);">
+        <select class="setting-select" id="model-select" aria-label="Available models" onchange="pickModel(this.value)" style="flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;color:var(--gold);">
           <option value="">No models loaded yet</option>
         </select>
         <button class="notes-export-btn" id="refresh-models-btn" onclick="refreshModels()" style="padding:0 14px;min-height:48px;">Refresh</button>
         <button class="notes-export-btn" id="test-conn-btn" onclick="testConnection()" style="padding:0 14px;min-height:48px;">Test</button>
       </div>
       <div class="provider-note"><strong>ADVANCED</strong><br>These presets need a key pasted in yourself. For everyday use pick a model above — each carries its own key and works in a normal browser through the local proxy.</div>
-      <div style="padding:8px 4px 0;font-size:11px;color:var(--text-3);line-height:1.6;">If a call fails with “Failed to fetch”, the app is not being served by <code>rhema-server.js</code>. AI features need that server for its same-origin proxy; opening the file directly will not work.</div>
+      <div style="padding:8px 4px 0;font-size:var(--fs-2);color:var(--text-3);line-height:1.6;">If a call fails with “Failed to fetch”, the app is not being served by <code>rhema-server.js</code>. AI features need that server for its same-origin proxy; opening the file directly will not work.</div>
       </div>
     </div>
     <div class="setting-group">
       <div class="setting-group-label">PROGRESS</div>
-      <div class="setting-row"><div><div class="setting-label" id="stats-display">Streak: 0 · Level 1</div><div class="setting-sub" id="xp-display">0 XP total</div></div><button onclick="resetProgress()" style="font-size:12px;color:var(--warfare);">Reset</button></div>
+      <div class="setting-row"><div><div class="setting-label" id="stats-display">Streak: 0 · Level 1</div><div class="setting-sub" id="xp-display">0 XP total</div></div><button onclick="resetProgress()" style="font-size:var(--fs-3);color:var(--warfare);">Reset</button></div>
     </div>
     <div class="setting-group">
       <div class="setting-group-label">OFFLINE</div>
-      <div class="setting-row"><div><div class="setting-label" id="offline-info">Chapters cached: 0</div><div class="setting-sub">Read chapters work offline (auto-refresh after 7 days)</div></div><div style="display:flex;gap:6px;"><button onclick="downloadFullBible()" style="font-size:12px;color:var(--gold);">Download All</button><button onclick="clearOfflineCache()" style="font-size:12px;color:var(--warfare);">Clear</button></div></div>
+      <div class="setting-row"><div><div class="setting-label" id="offline-info">Chapters cached: 0</div><div class="setting-sub">Read chapters work offline (auto-refresh after 7 days)</div></div><div style="display:flex;gap:6px;"><button onclick="downloadFullBible()" style="font-size:var(--fs-3);color:var(--gold);">Download All</button><button onclick="clearOfflineCache()" style="font-size:var(--fs-3);color:var(--warfare);">Clear</button></div></div>
     </div>
     <div class="setting-group">
       <div class="setting-group-label">GUIDE</div>
       <div class="setting-row"><div><div class="setting-label">Watch the intro</div><div class="setting-sub">The motion tour of Rhema &mdash; plays once when you first open the app</div></div><button class="notes-export-btn" onclick="closeSettings();setTimeout(function(){startIntro({});},240);" style="padding:0 14px;min-height:44px;">&#9654; Play</button></div>
       <div class="setting-row"><div><div class="setting-label">Guided tutorial</div><div class="setting-sub">A quick walkthrough of reading, comparing, plans, Ask and notes</div></div><button class="notes-export-btn" onclick="startTour()" style="padding:0 14px;min-height:44px;">▶ Start</button></div>
     </div>
-    <div style="padding:0 20px 8px;font-size:12px;color:var(--text-3);line-height:1.7;">Bible text via the Free Use Bible API — BSB (modern, readable), KJV, WEB and more, all public domain. NKJV/NIV require licensing and are not available. Notes persist locally on this device; your API key is kept only for the current browser session.</div>
+    <div style="padding:0 20px 8px;font-size:var(--fs-3);color:var(--text-3);line-height:1.7;">Bible text via the Free Use Bible API — BSB (modern, readable), KJV, WEB and more, all public domain. NKJV/NIV require licensing and are not available. Notes persist locally on this device; your API key is kept only for the current browser session.</div>
   </div>
 </div>
 <!-- CROSS-REF PANEL -->
@@ -1682,10 +1682,10 @@ img{ -webkit-user-drag:none; }
   <div class="modal-sheet" style="max-height:80vh;overflow-y:auto;">
     <div class="modal-handle"></div>
     <div style="padding:16px 20px 8px;display:flex;align-items:center;justify-content:space-between;">
-      <div style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;color:var(--covenant);">CROSS-REFERENCES</div>
-      <button class="icon-close" aria-label="Close cross references" onclick="closeXref()" style="color:var(--text-3);font-size:24px;line-height:1;padding:8px 12px;margin:-8px -8px -8px 0;">×</button>
+      <div style="font-family:'Cinzel',serif;font-size:var(--fs-3);letter-spacing:2px;color:var(--covenant);">CROSS-REFERENCES</div>
+      <button class="icon-close" aria-label="Close cross references" onclick="closeXref()" style="color:var(--text-3);font-size:var(--fs-7);line-height:1;padding:8px 12px;margin:-8px -8px -8px 0;">×</button>
     </div>
-    <div id="xref-source" style="margin:0 20px 12px;padding:12px;background:var(--elev);border-radius:10px;border-left:3px solid var(--covenant);"></div>
+    <div id="xref-source" style="margin:0 20px 12px;padding:12px;background:var(--elev);border-radius:var(--r-md);border-left:3px solid var(--covenant);"></div>
     <div id="xref-list" style="padding:0 16px 20px;"></div>
   </div>
 </div>
@@ -1718,9 +1718,9 @@ img{ -webkit-user-drag:none; }
     <button type="button" class="hl-dot" style="background:#DC508C;" aria-label="Highlight pink" onclick="applyHighlight('pink')"></button>
     <button type="button" class="hl-dot" style="background:#3C82E6;" aria-label="Highlight blue" onclick="applyHighlight('blue')"></button>
     <button type="button" class="hl-dot" style="background:#9650DC;" aria-label="Highlight purple" onclick="applyHighlight('purple')"></button>
-    <button type="button" class="hl-dot" style="background:transparent;border:1px solid var(--warfare);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--warfare);" aria-label="Remove highlight" onclick="removeHighlight()">✕</button>
+    <button type="button" class="hl-dot" style="background:transparent;border:1px solid var(--warfare);display:flex;align-items:center;justify-content:center;font-size:var(--fs-2);color:var(--warfare);" aria-label="Remove highlight" onclick="removeHighlight()">✕</button>
   </div>
-  <button class="icon-close" aria-label="Close verse actions" onclick="closeVerseActions()" style="position:absolute;top:4px;right:6px;color:var(--text-3);font-size:22px;line-height:1;padding:8px 12px;">×</button>
+  <button class="icon-close" aria-label="Close verse actions" onclick="closeVerseActions()" style="position:absolute;top:4px;right:6px;color:var(--text-3);font-size:var(--fs-6);line-height:1;padding:8px 12px;">×</button>
 </div>
 <!-- STUDY PANEL -->
 <div id="study-panel" role="dialog" aria-modal="true" aria-label="Verse study" onclick="closeStudyPanelOutside(event)">
@@ -5662,7 +5662,7 @@ function renderHome(){
 function renderHomePlans(){
   const scroll=document.getElementById('home-plans-scroll');
   const colors=['var(--gold)','var(--covenant)','var(--kingdom)','var(--ruby)','var(--bread)'];
-  let h=`<button type="button" class="plan-card-home plan-card-new" onclick="openNewPlan()"><span style="font-size:22px;">✦</span><span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:1px;">NEW PLAN</span></button>`;
+  let h=`<button type="button" class="plan-card-home plan-card-new" onclick="openNewPlan()"><span style="font-size:var(--fs-6);">✦</span><span style="font-family:'Cinzel',serif;font-size:var(--fs-2);letter-spacing:1px;">NEW PLAN</span></button>`;
   S.plans.slice(0,5).forEach((p,i)=>{
     const done=(p.completedDays||[]).length;
     const pct=p.days.length?Math.round(done/p.days.length*100):0;
@@ -5713,7 +5713,7 @@ async function loadChapter(){
   document.getElementById('reader-ch-label').textContent=`Chapter ${chapter}`;
   refreshTransBadge();
   const cc=document.getElementById('chapter-content');
-  cc.innerHTML=`<div class="chapter-title">${book[0].toUpperCase()} ${chapter}</div><div style="padding:40px;text-align:center;"><div class="spinner" style="margin:0 auto 12px;"></div><div style="font-size:13px;color:var(--text-3);">Loading…</div></div>`;
+  cc.innerHTML=`<div class="chapter-title">${book[0].toUpperCase()} ${chapter}</div><div style="padding:40px;text-align:center;"><div class="spinner" style="margin:0 auto 12px;"></div><div style="font-size:var(--fs-3);color:var(--text-3);">Loading…</div></div>`;
   const atStart=bookIndex===0&&chapter===1;
   const atEnd=bookIndex===ALL_BOOKS.length-1&&chapter===book[2];
   const prevBtn=document.getElementById('prev-ch-btn'),nextBtn=document.getElementById('next-ch-btn');
@@ -5764,7 +5764,7 @@ async function loadChapter(){
   const hint=net
     ? 'Network blocked — both Bible sources were unreachable. If you are viewing this inside a preview pane, download the file and open it in your browser. Otherwise check your internet connection.'
     : `${sTxt(lastErr&&lastErr.message||'unknown error')} — try a different translation in Settings.`;
-  cc.innerHTML=`<div class="chapter-title">${book[0].toUpperCase()} ${chapter}</div><div style="padding:40px 24px;text-align:center;color:var(--text-2);"><div style="color:var(--warfare);font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:10px;">Could not load chapter</div><div style="font-size:13px;line-height:1.6;">${hint}</div><button onclick="loadChapter()" style="margin-top:16px;padding:8px 18px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-size:13px;">Retry</button></div>`;
+  cc.innerHTML=`<div class="chapter-title">${book[0].toUpperCase()} ${chapter}</div><div style="padding:40px 24px;text-align:center;color:var(--text-2);"><div style="color:var(--warfare);font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:10px;">Could not load chapter</div><div style="font-size:var(--fs-3);line-height:1.6;">${hint}</div><button onclick="loadChapter()" style="margin-top:16px;padding:8px 18px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:var(--r-sm);color:var(--gold);font-size:var(--fs-3);">Retry</button></div>`;
 }
 // Primary source
 async function fetchHelloAO(usfm,translation,chapter){
@@ -5823,7 +5823,7 @@ function renderChapter(verses,bookName){
     const txtAttr=sAttr(v.text.trim());
     h+=`<button type="button" class="verse ${hlCls}" id="v${v.verse}" data-v="${v.verse}" data-txt="${txtAttr}" aria-label="${sAttr(bookName+' '+S.chapter+' verse '+v.verse+'. '+v.text.trim())}" onmousedown="startLP(event,this)" onmouseup="endLP(event,this)" onclick="verseClick(this)">${dot}<span class="verse-num">${v.verse}</span><span class="verse-text">${sTxt(stripLeadingVerseNumber(v.text.trim(), v.verse))}</span></button>`;
     if(hl&&hl.note){
-      h+=`<div class="note-panel" data-key="${key}"><div style="font-size:14px;color:var(--text-2);font-style:italic;">📝 ${sTxt(hl.note)}</div></div>`;
+      h+=`<div class="note-panel" data-key="${key}"><div style="font-size:var(--fs-4);color:var(--text-2);font-style:italic;">📝 ${sTxt(hl.note)}</div></div>`;
     }
   });
   cc.innerHTML=h;
@@ -5889,7 +5889,7 @@ async function loadCompare(){
   document.getElementById('reader-ch-label').textContent=`Chapter ${chapter}`;
   refreshTransBadge();
   const cc=document.getElementById('chapter-content');
-  cc.innerHTML=`<div class="chapter-title">${book[0].toUpperCase()} ${chapter}</div><div style="padding:40px;text-align:center;"><div class="spinner" style="margin:0 auto 12px;"></div><div style="font-size:13px;color:var(--text-3);">Loading translations…</div></div>`;
+  cc.innerHTML=`<div class="chapter-title">${book[0].toUpperCase()} ${chapter}</div><div style="padding:40px;text-align:center;"><div class="spinner" style="margin:0 auto 12px;"></div><div style="font-size:var(--fs-3);color:var(--text-3);">Loading translations…</div></div>`;
   const atStart=bookIndex===0&&chapter===1;
   const atEnd=bookIndex===ALL_BOOKS.length-1&&chapter===book[2];
   const prevBtn=document.getElementById('prev-ch-btn'),nextBtn=document.getElementById('next-ch-btn');
@@ -5912,7 +5912,7 @@ async function loadCompare(){
   if(!current())return;
   const ok=results.filter(r=>r.verses.length);
   if(!ok.length){
-    cc.innerHTML=`<div class="chapter-title">${book[0].toUpperCase()} ${chapter}</div><div style="padding:40px 24px;text-align:center;color:var(--text-2);"><div style="color:var(--warfare);font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:10px;">Could not load translations</div><div style="font-size:13px;line-height:1.6;">No selected translation could be fetched. Check your connection and try again.</div><button onclick="loadCompare()" style="margin-top:16px;padding:8px 18px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-size:13px;">Retry</button></div>`;
+    cc.innerHTML=`<div class="chapter-title">${book[0].toUpperCase()} ${chapter}</div><div style="padding:40px 24px;text-align:center;color:var(--text-2);"><div style="color:var(--warfare);font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:10px;">Could not load translations</div><div style="font-size:var(--fs-3);line-height:1.6;">No selected translation could be fetched. Check your connection and try again.</div><button onclick="loadCompare()" style="margin-top:16px;padding:8px 18px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:var(--r-sm);color:var(--gold);font-size:var(--fs-3);">Retry</button></div>`;
     return;
   }
   // verse-aligned union across selected translations
@@ -6026,7 +6026,7 @@ function openNoteEditor(){
   if(!vEl)return;
   const np=document.createElement('div');
   np.className='note-panel';np.dataset.key=key;np.dataset.verseText=verseText;
-  np.innerHTML=`<textarea class="note-textarea" aria-label="Verse note" placeholder="Write your reflection on this verse...">${sTxt(hl.note||'')}</textarea><div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;padding-top:8px;"><button onclick="cancelNote(this)" style="font-size:12px;color:var(--text-3);padding:6px 10px;">Cancel</button><button class="note-save-btn" onclick="saveNote('${key}',${vn},this)">SAVE NOTE</button></div>`;
+  np.innerHTML=`<textarea class="note-textarea" aria-label="Verse note" placeholder="Write your reflection on this verse...">${sTxt(hl.note||'')}</textarea><div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;padding-top:8px;"><button onclick="cancelNote(this)" style="font-size:var(--fs-3);color:var(--text-3);padding:6px 10px;">Cancel</button><button class="note-save-btn" onclick="saveNote('${key}',${vn},this)">SAVE NOTE</button></div>`;
   vEl.after(np);
   np.querySelector('textarea').focus();
   np.scrollIntoView({behavior:'smooth',block:'center'});
@@ -6056,7 +6056,7 @@ function saveNote(key,v,btn){
   if(vEl){
     if(note){
       if(!vEl.querySelector('.verse-note-dot')){const d=document.createElement('span');d.className='verse-note-dot';vEl.appendChild(d);}
-      panel.innerHTML=`<div style="font-size:14px;color:var(--text-2);font-style:italic;padding:4px 0;">📝 ${sTxt(note)}</div><button style="font-size:11px;color:var(--gold);padding:6px 0 2px;cursor:pointer;" onclick="openNoteEditorFor('${key}',${v})">Edit note</button>`;
+      panel.innerHTML=`<div style="font-size:var(--fs-4);color:var(--text-2);font-style:italic;padding:4px 0;">📝 ${sTxt(note)}</div><button style="font-size:var(--fs-2);color:var(--gold);padding:6px 0 2px;cursor:pointer;" onclick="openNoteEditorFor('${key}',${v})">Edit note</button>`;
     }else{
       panel.remove();
       const dot=vEl.querySelector('.verse-note-dot');
@@ -6073,7 +6073,7 @@ function openNoteEditorFor(key,vn){
   if(!vEl)return;
   const np=document.createElement('div');
   np.className='note-panel';np.dataset.key=key;
-  np.innerHTML=`<textarea class="note-textarea" aria-label="Verse note" placeholder="Write your reflection on this verse...">${sTxt(hl.note||'')}</textarea><div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;padding-top:8px;"><button onclick="cancelNote(this)" style="font-size:12px;color:var(--text-3);padding:6px 10px;">Cancel</button><button class="note-save-btn" onclick="saveNote('${key}',${vn},this)">SAVE NOTE</button></div>`;
+  np.innerHTML=`<textarea class="note-textarea" aria-label="Verse note" placeholder="Write your reflection on this verse...">${sTxt(hl.note||'')}</textarea><div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;padding-top:8px;"><button onclick="cancelNote(this)" style="font-size:var(--fs-3);color:var(--text-3);padding:6px 10px;">Cancel</button><button class="note-save-btn" onclick="saveNote('${key}',${vn},this)">SAVE NOTE</button></div>`;
   vEl.after(np);
   np.querySelector('textarea').focus();
   np.scrollIntoView({behavior:'smooth',block:'center'});
@@ -6289,7 +6289,7 @@ function selectBook(idx){
 async function selectChapter(bookIdx,ch){
   const book=ALL_BOOKS[bookIdx];
   const c=document.getElementById('book-selector-content');
-  c.innerHTML=`<div class="modal-title" style="display:flex;align-items:center;gap:12px;"><button type="button" class="modal-back-btn" aria-label="Back to chapters" onclick="selectBook(${bookIdx})">← Back</button><span>${book[0].toUpperCase()} ${ch}</span></div><div style="padding:24px;text-align:center;"><div class="spinner" style="margin:0 auto 10px;"></div><div style="font-size:12px;color:var(--text-3);">Loading verses…</div></div>`;
+  c.innerHTML=`<div class="modal-title" style="display:flex;align-items:center;gap:12px;"><button type="button" class="modal-back-btn" aria-label="Back to chapters" onclick="selectBook(${bookIdx})">← Back</button><span>${book[0].toUpperCase()} ${ch}</span></div><div style="padding:24px;text-align:center;"><div class="spinner" style="margin:0 auto 10px;"></div><div style="font-size:var(--fs-3);color:var(--text-3);">Loading verses…</div></div>`;
   let verses=null;
   const cch=await chCacheGet(book[1],S.translation,ch);
   if(cch&&(Date.now()-cch.ts)<7*86400000)verses=cch.data;
@@ -6656,7 +6656,7 @@ function renderStudyFromCache(data,activeMode){
     } else if(content){
       h+='<div class="study-section" id="study-section-'+m+'" style="border-left-color:'+c+';'+(m!==activeMode?'display:none;':'')+'"><div class="study-section-label" style="color:'+c+';">'+label+'</div><div class="study-section-content">'+fmtStudy(content)+'<button class="study-deeper-btn" type="button" onclick="studyDeepenInAsk(\''+m+'\')">↗ Go deeper in Ask</button></div></div>';
     }else if(data._errors?.[m]){
-      h+='<div class="study-section" id="study-section-'+m+'" style="border-left-color:'+c+';'+(m!==activeMode?'display:none;':'')+'"><div class="study-section-label" style="color:'+c+';">'+label+'</div><div class="study-section-content" style="color:var(--warfare);font-size:14px;">'+sTxt(data._errors[m])+'<br><button class="notes-export-btn" style="margin-top:10px;" onclick="retryStudyMode(\''+m+'\')">Retry</button></div></div>';
+      h+='<div class="study-section" id="study-section-'+m+'" style="border-left-color:'+c+';'+(m!==activeMode?'display:none;':'')+'"><div class="study-section-label" style="color:'+c+';">'+label+'</div><div class="study-section-content" style="color:var(--warfare);font-size:var(--fs-4);">'+sTxt(data._errors[m])+'<br><button class="notes-export-btn" style="margin-top:10px;" onclick="retryStudyMode(\''+m+'\')">Retry</button></div></div>';
     }else{
       h+='<div class="study-section" id="study-section-'+m+'" style="border-left-color:'+c+';'+(m!==activeMode?'display:none;':'')+'"><div class="study-section-label" style="color:'+c+';">'+label+'</div><div class="study-section-content"><div class="skeleton" style="height:40px;width:60%;"></div></div></div>';
     }
@@ -6855,8 +6855,8 @@ Include all ${days} days. Do NOT skip any. Use real scripture references.`,
       const st=document.getElementById('plan-gen-error');
       if(st){
         st.style.display='block';
-        st.innerHTML='<div style="font-size:13px;color:var(--warfare);margin-bottom:8px;">'+sTxt(msg)+'</div>'+
-          '<button type="button" onclick="generatePlan()" style="font-size:12px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:8px 14px;background:transparent;">↻ Try again</button>';
+        st.innerHTML='<div style="font-size:var(--fs-3);color:var(--warfare);margin-bottom:8px;">'+sTxt(msg)+'</div>'+
+          '<button type="button" onclick="generatePlan()" style="font-size:var(--fs-3);color:var(--gold);border:1px solid var(--gold);border-radius:var(--r-sm);padding:8px 14px;background:transparent;">↻ Try again</button>';
       }
       toast('Could not create plan');
     }
@@ -6873,7 +6873,7 @@ function renderPlans(){
   if(disc)disc.style.display='block';
   if(cwrap)cwrap.style.display='block';
   const colors=['var(--gold)','var(--covenant)','var(--kingdom)','var(--ruby)','var(--bread)','var(--warfare)','var(--text-2)'];
-  if(!S.plans.length){list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-3);"><div style="font-size:36px;margin-bottom:12px;">📖</div><div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);">No plans yet</div><div style="font-size:13px;margin-top:6px;">Create your first reading plan below</div></div>`;return;}
+  if(!S.plans.length){list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-3);"><div style="font-size:36px;margin-bottom:12px;">📖</div><div style="font-family:'Cinzel',serif;font-size:var(--fs-4);color:var(--gold);">No plans yet</div><div style="font-size:var(--fs-3);margin-top:6px;">Create your first reading plan below</div></div>`;return;}
   let h='';
   S.plans.forEach((p,i)=>{
     const c=colors[i%colors.length];
@@ -6894,17 +6894,17 @@ function viewPlan(idx){
   const disc=document.getElementById('discover');if(disc)disc.style.display='none';
   dv.style.display='block';
   let h=`<button type="button" class="plan-day-back" onclick="closePlanView()">← Back to Discover</button>
-    <div style="padding:0 20px 16px;"><div style="font-family:'Cinzel',serif;font-size:18px;color:var(--text-1);margin-bottom:4px;">${sTxt(plan.title)}</div><div style="font-size:13px;color:var(--text-2);">${sTxt(plan.description)}</div></div>`;
+    <div style="padding:0 20px 16px;"><div style="font-family:'Cinzel',serif;font-size:var(--fs-5);color:var(--text-1);margin-bottom:4px;">${sTxt(plan.title)}</div><div style="font-size:var(--fs-3);color:var(--text-2);">${sTxt(plan.description)}</div></div>`;
   const doneCount=(plan.completedDays||[]).length;
   const totalDays=plan.days.length;
   const pct=totalDays?Math.round(doneCount/totalDays*100):0;
   h+=`<div style="padding:0 20px 18px;">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-      <span style="font-size:12px;color:var(--text-2);">${doneCount} of ${totalDays} days complete</span>
-      <span style="font-size:12px;color:var(--gold);font-weight:600;">${pct}%</span>
+      <span style="font-size:var(--fs-3);color:var(--text-2);">${doneCount} of ${totalDays} days complete</span>
+      <span style="font-size:var(--fs-3);color:var(--gold);font-weight:600;">${pct}%</span>
     </div>
-    <div style="height:4px;background:var(--elev-2,var(--elev));border-radius:2px;overflow:hidden;">
-      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--covenant));border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1);"></div>
+    <div style="height:4px;background:var(--elev-2,var(--elev));border-radius:var(--r-xs);overflow:hidden;">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--covenant));border-radius:var(--r-xs);transition:width .5s cubic-bezier(.2,.8,.2,1);"></div>
     </div>
   </div>`;
   plan.days.forEach((day,i)=>{
@@ -6917,8 +6917,8 @@ function viewPlan(idx){
         <div class="plan-day-ref">${sTxt(day.title||'Day '+(i+1))}</div>
         <div class="plan-day-focus" style="color:var(--text-2);">This day's Scripture reference could not be verified. The rest of your plan is safe.</div>
         <div style="display:flex;gap:10px;margin-top:10px;">
-          <button type="button" onclick="event.stopPropagation();regenPlanDay(${idx},${i})" style="font-size:12px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:6px 12px;background:transparent;">↻ Find a new reference</button>
-          <button type="button" onclick="event.stopPropagation();skipPlanDay(${idx},${i})" style="font-size:12px;color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;background:transparent;">Skip this day</button>
+          <button type="button" onclick="event.stopPropagation();regenPlanDay(${idx},${i})" style="font-size:var(--fs-3);color:var(--gold);border:1px solid var(--gold);border-radius:var(--r-sm);padding:6px 12px;background:transparent;">↻ Find a new reference</button>
+          <button type="button" onclick="event.stopPropagation();skipPlanDay(${idx},${i})" style="font-size:var(--fs-3);color:var(--text-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 12px;background:transparent;">Skip this day</button>
         </div>
       </div>`;
       return;
@@ -6930,16 +6930,16 @@ function viewPlan(idx){
       ${day.commentary?`<div class="plan-day-comm">${sTxt(day.commentary).slice(0,250)}${day.commentary.length>250?'…':''}</div>`:''}
       ${day.prayer?`<div class="plan-day-prayer">🙏 ${sTxt(day.prayer).slice(0,180)}${day.prayer.length>180?'…':''}</div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px;">
-        <span style="font-size:12px;color:var(--gold);">Tap to read →</span>
+        <span style="font-size:var(--fs-3);color:var(--gold);">Tap to read →</span>
         <span style="display:flex;align-items:center;gap:10px;">
-          ${done?`<span style="font-size:12px;color:var(--covenant);font-weight:600;">✓ Completed</span>
-          <button type="button" onclick="event.stopPropagation();togglePlanDay(${idx},${i})" style="font-size:11px;color:var(--text-3);border:1px solid var(--border);border-radius:8px;padding:5px 10px;background:transparent;">Undo</button>`
-          :`<button type="button" onclick="event.stopPropagation();togglePlanDay(${idx},${i})" style="font-size:11px;color:var(--text-2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;background:transparent;">Mark complete</button>`}
+          ${done?`<span style="font-size:var(--fs-3);color:var(--covenant);font-weight:600;">✓ Completed</span>
+          <button type="button" onclick="event.stopPropagation();togglePlanDay(${idx},${i})" style="font-size:var(--fs-2);color:var(--text-3);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;background:transparent;">Undo</button>`
+          :`<button type="button" onclick="event.stopPropagation();togglePlanDay(${idx},${i})" style="font-size:var(--fs-2);color:var(--text-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 10px;background:transparent;">Mark complete</button>`}
         </span>
       </div>
     </div>`;
   });
-  h+=`<div style="padding:0 20px 20px;"><button onclick="deletePlan(${idx})" style="font-size:13px;color:var(--warfare);">Delete this plan</button></div>`;
+  h+=`<div style="padding:0 20px 20px;"><button onclick="deletePlan(${idx})" style="font-size:var(--fs-3);color:var(--warfare);">Delete this plan</button></div>`;
   dv.innerHTML=h;
 }
 function closePlanView(){S.planView=null;renderPlans();}
@@ -7086,7 +7086,7 @@ answer = index of correct option. explain 1-2 sentences, Bible-based. Do not add
 function renderCourseQuiz(){
   const panel=document.getElementById('course-gen-panel');panel.classList.remove('open');
   const wrap=document.getElementById('course-quiz-wrap');
-  let h=`<div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">CLARITY QUIZ — ${sTxt(courseQuiz.topic).toUpperCase()}</div><div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">Answer honestly — your answers shape the course Rhema builds for you.</div>`;
+  let h=`<div style="font-family:'Cinzel',serif;font-size:var(--fs-3);letter-spacing:2px;color:var(--gold);margin-bottom:4px;">CLARITY QUIZ — ${sTxt(courseQuiz.topic).toUpperCase()}</div><div style="font-size:var(--fs-3);color:var(--text-2);margin-bottom:14px;">Answer honestly — your answers shape the course Rhema builds for you.</div>`;
   courseQuiz.mc.forEach((q,qi)=>{
     h+=`<div class="quiz-card"><div class="quiz-q">${qi+1}. ${sTxt(q.q)}</div><div class="quiz-opts">`+
       q.options.map((o,oi)=>`<button type="button" class="quiz-opt" data-mc="${qi}" data-oi="${oi}" onclick="pickQuizOpt(${qi},${oi},this)">${String.fromCharCode(65+oi)}. ${sTxt(o)}</button>`).join('')+
@@ -7259,10 +7259,10 @@ function viewCourse(idx){
   const done=(c.completedDays||[]).length;
   const pct=c.days.length?Math.round(done/c.days.length*100):0;
   let h=`<button type="button" class="course-day-back" onclick="closeCourseView()">← Back to Discover</button>
-    <div style="padding:0 20px 16px;"><div style="font-family:'Cinzel',serif;font-size:18px;color:var(--text-1);margin-bottom:4px;">${sTxt(c.title)}${c.sample?'<span class="course-badge">SAMPLE</span>':''}</div><div style="font-size:13px;color:var(--text-2);">${sTxt(c.description)}</div><div style="font-size:12px;color:var(--text-3);margin-top:6px;">${done}/${c.days.length} days · ${pct}%</div><div class="course-progress-outer"><div class="course-progress-inner" style="width:${pct}%;"></div></div></div>`;
+    <div style="padding:0 20px 16px;"><div style="font-family:'Cinzel',serif;font-size:var(--fs-5);color:var(--text-1);margin-bottom:4px;">${sTxt(c.title)}${c.sample?'<span class="course-badge">SAMPLE</span>':''}</div><div style="font-size:var(--fs-3);color:var(--text-2);">${sTxt(c.description)}</div><div style="font-size:var(--fs-3);color:var(--text-3);margin-top:6px;">${done}/${c.days.length} days · ${pct}%</div><div class="course-progress-outer"><div class="course-progress-inner" style="width:${pct}%;"></div></div></div>`;
   c.days.forEach((day,i)=>{
     const isDone=(c.completedDays||[]).includes(i);
-    h+=`<div class="course-day-card${isDone?' done':''}" role="button" tabindex="0" onclick="openCourseDay(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCourseDay(${i})}"><span class="course-day-num">DAY ${day.day}</span><div class="course-day-ref">${sTxt(day.ref)} — ${sTxt(day.title)}</div>${isDone?'<div style="font-size:11px;color:var(--covenant);margin-top:4px;">✓ Completed</div>':''}</div>`;
+    h+=`<div class="course-day-card${isDone?' done':''}" role="button" tabindex="0" onclick="openCourseDay(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCourseDay(${i})}"><span class="course-day-num">DAY ${day.day}</span><div class="course-day-ref">${sTxt(day.ref)} — ${sTxt(day.title)}</div>${isDone?'<div style="font-size:var(--fs-2);color:var(--covenant);margin-top:4px;">✓ Completed</div>':''}</div>`;
   });
   h+=`<div style="padding:4px 20px 20px;"><button type="button" class="course-day-done-btn" style="background:var(--warfare);color:#fff;" onclick="deleteCourse(${idx})">${c.sample?'DELETE SAMPLE':'DELETE COURSE'}</button></div>`;
   dv.innerHTML=h;
@@ -7280,12 +7280,12 @@ function viewModules(idx){
   const done=c.completedModules||[];
   const pct=c.modules.length?Math.round(done.length/c.modules.length*100):0;
   let h=`<button type="button" class="course-day-back" onclick="closeCourseView()">← Back to Discover</button>
-    <div style="padding:0 20px 16px;"><div style="font-family:'Cinzel',serif;font-size:18px;color:var(--text-1);margin-bottom:4px;">${sTxt(c.title)}</div><div style="font-size:13px;color:var(--text-2);">${sTxt(c.description)}</div><div style="font-size:12px;color:var(--text-3);margin-top:6px;">${done.length}/${c.modules.length} modules · ${pct}%</div><div class="course-progress-outer"><div class="course-progress-inner" style="width:${pct}%;"></div></div></div>`;
+    <div style="padding:0 20px 16px;"><div style="font-family:'Cinzel',serif;font-size:var(--fs-5);color:var(--text-1);margin-bottom:4px;">${sTxt(c.title)}</div><div style="font-size:var(--fs-3);color:var(--text-2);">${sTxt(c.description)}</div><div style="font-size:var(--fs-3);color:var(--text-3);margin-top:6px;">${done.length}/${c.modules.length} modules · ${pct}%</div><div class="course-progress-outer"><div class="course-progress-inner" style="width:${pct}%;"></div></div></div>`;
   c.modules.forEach((m,mi)=>{
     const locked=moduleLocked(c,mi);
     const passed=m.passed===true;
     const read=m.lessons.filter(l=>l.filled).length;
-    h+=`<div class="course-day-card${passed?' done':''}" role="button" tabindex="0" onclick="openModule(${mi})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModule(${mi})}" style="${locked?'opacity:.55;':''}"><span class="course-day-num">${locked?'🔒 ':passed?'✓ ':'MODULE '}${mi+1}</span><div class="course-day-ref">${sTxt(m.title)}</div><div style="font-size:11px;color:var(--text-3);margin-top:4px;">${m.lessons.length} lessons · ${read}/${m.lessons.length} read${passed?' · ✓ Passed':locked?' · Locked — pass Module '+mi+' first':''}</div></div>`;
+    h+=`<div class="course-day-card${passed?' done':''}" role="button" tabindex="0" onclick="openModule(${mi})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openModule(${mi})}" style="${locked?'opacity:.55;':''}"><span class="course-day-num">${locked?'🔒 ':passed?'✓ ':'MODULE '}${mi+1}</span><div class="course-day-ref">${sTxt(m.title)}</div><div style="font-size:var(--fs-2);color:var(--text-3);margin-top:4px;">${m.lessons.length} lessons · ${read}/${m.lessons.length} read${passed?' · ✓ Passed':locked?' · Locked — pass Module '+mi+' first':''}</div></div>`;
   });
   h+=`<div style="padding:4px 20px 20px;"><button type="button" class="course-day-done-btn" style="background:var(--warfare);color:#fff;" onclick="deleteCourse(${idx})">${c.sample?'DELETE SAMPLE':'DELETE COURSE'}</button></div>`;
   dv.innerHTML=h;
@@ -7299,10 +7299,10 @@ function openModule(mi){
   const dv=document.getElementById('course-day-view');
   const passed=m.passed===true;
   let h=`<button type="button" class="course-day-back" onclick="viewCourse(${idx})">← All modules</button>
-    <div style="padding:0 20px 16px;"><span class="course-day-num">MODULE ${mi+1} OF ${c.modules.length}</span><div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-1);margin:2px 0 2px;">${sTxt(m.title)}</div>${m.focus?`<div style="font-size:13px;color:var(--text-2);margin-top:6px;">${sTxt(m.focus)}</div>`:''}${passed?'<div style="font-size:12px;color:var(--covenant);margin-top:6px;">✓ Module passed</div>':''}</div>`;
+    <div style="padding:0 20px 16px;"><span class="course-day-num">MODULE ${mi+1} OF ${c.modules.length}</span><div style="font-family:'Cinzel',serif;font-size:var(--fs-4);color:var(--text-1);margin:2px 0 2px;">${sTxt(m.title)}</div>${m.focus?`<div style="font-size:var(--fs-3);color:var(--text-2);margin-top:6px;">${sTxt(m.focus)}</div>`:''}${passed?'<div style="font-size:var(--fs-3);color:var(--covenant);margin-top:6px;">✓ Module passed</div>':''}</div>`;
   m.lessons.forEach((l,li)=>{
     const isDone=l.checked===true;
-    h+=`<div class="course-day-card${isDone?' done':''}" role="button" tabindex="0" onclick="openLesson(${mi},${li})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLesson(${mi},${li})}"><span class="course-day-num">LESSON ${li+1}</span><div class="course-day-ref">${sTxt(l.ref)} — ${sTxt(l.title)}</div>${isDone?'<div style="font-size:11px;color:var(--covenant);margin-top:4px;">✓ Completed</div>':''}</div>`;
+    h+=`<div class="course-day-card${isDone?' done':''}" role="button" tabindex="0" onclick="openLesson(${mi},${li})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLesson(${mi},${li})}"><span class="course-day-num">LESSON ${li+1}</span><div class="course-day-ref">${sTxt(l.ref)} — ${sTxt(l.title)}</div>${isDone?'<div style="font-size:var(--fs-2);color:var(--covenant);margin-top:4px;">✓ Completed</div>':''}</div>`;
   });
   h+=`<div style="padding:4px 20px 20px;">${passed?'':`<button type="button" class="course-day-done-btn" onclick="takeModuleQuiz(${mi})">${m.quiz&&m.quiz.length?'Take Module Quiz':'Generate Module Quiz'}</button>`}<button type="button" class="course-day-done-btn" style="background:var(--elev);color:var(--gold);border:1px solid var(--gold);margin-top:8px;" onclick="viewCourse(${idx})">← All modules</button></div>`;
   dv.innerHTML=h;
@@ -7327,7 +7327,7 @@ function openLesson(mi,li){
     // shell + start streaming generation
     l._filling=true;
     dv.innerHTML=`<button type="button" class="course-day-back" onclick="openModule(${mi})">← Module ${mi+1}</button>
-    <div style="padding:0 20px 16px;"><span class="course-day-num">LESSON ${li+1} OF ${m.lessons.length} · ${sTxt(m.title)}</span><div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-1);margin:2px 0 2px;">${sTxt(l.title)}</div><div style="font-size:13px;color:var(--gold);">${sTxt(l.ref)}</div>${l.focus?`<div style="font-size:13px;color:var(--text-2);margin-top:6px;">${sTxt(l.focus)}</div>`:''}</div>
+    <div style="padding:0 20px 16px;"><span class="course-day-num">LESSON ${li+1} OF ${m.lessons.length} · ${sTxt(m.title)}</span><div style="font-family:'Cinzel',serif;font-size:var(--fs-4);color:var(--text-1);margin:2px 0 2px;">${sTxt(l.title)}</div><div style="font-size:var(--fs-3);color:var(--gold);">${sTxt(l.ref)}</div>${l.focus?`<div style="font-size:var(--fs-3);color:var(--text-2);margin-top:6px;">${sTxt(l.focus)}</div>`:''}</div>
     <div class="course-day-card"><div class="study-skel-line" style="width:92%"></div><div class="study-skel-line" style="width:86%"></div><div class="study-skel-line" style="width:78%"></div><div class="study-skel-line" style="width:64%"></div><div class="study-skel-note">Writing your lesson — it streams in as it's generated</div><div class="course-day-teach"></div></div>`;
     setTimeout(()=>dv.scrollIntoView({behavior:'smooth'}),80);
     lessonStreamEl=dv.querySelector('.course-day-teach');
@@ -7401,13 +7401,13 @@ function renderLesson(idx,mi,li){
   const checked=l.checked===true;
   let quizHtml='';
   if(l.quiz&&l.quiz.length){
-    quizHtml='<div class="course-day-card" style="margin-top:12px;"><div style="font-family:\'Cinzel\',serif;font-size:13px;letter-spacing:1px;color:var(--gold);margin-bottom:10px;">✍️ CHECK YOURSELF</div>';
+    quizHtml='<div class="course-day-card" style="margin-top:12px;"><div style="font-family:\'Cinzel\',serif;font-size:var(--fs-3);letter-spacing:1px;color:var(--gold);margin-bottom:10px;">✍️ CHECK YOURSELF</div>';
     l.quiz.forEach((q,qi)=>{
-      quizHtml+=`<div style="font-size:14px;color:var(--text-1);font-weight:600;margin:10px 0 6px;">${qi+1}. ${sTxt(q.q)}</div>`;
+      quizHtml+=`<div style="font-size:var(--fs-4);color:var(--text-1);font-weight:600;margin:10px 0 6px;">${qi+1}. ${sTxt(q.q)}</div>`;
       q.options.forEach((o,oi)=>{
         const sel=o.picked;
-        quizHtml+=`<button type="button" class="course-check-opt${sel?' picked':''}" data-q="${qi}" data-o="${oi}" onclick="pickLessonCheckOpt(${mi},${li},${qi},${oi},this)" ${sel||checked?'disabled':''} style="${sel?`border-color:${o.verdict==='optimal'?'var(--covenant)':o.verdict==='adequate'?'var(--gold)':'var(--warfare)'};color:${o.verdict==='optimal'?'var(--covenant)':o.verdict==='adequate'?'var(--gold)':'var(--warfare)'};`:''}">${String.fromCharCode(65+oi)}. ${sTxt(o.t)}${sel?` <span style="font-size:11px;opacity:.85;">— ${o.verdict==='optimal'?'Optimal ✓':o.verdict==='adequate'?'Adequate ○':'Poor ✗'}</span>`:''}</button>`;
-        if(sel)quizHtml+=`<div style="font-size:12px;color:var(--text-2);margin:-4px 0 8px 14px;line-height:1.5;">${sTxt(o.why)}</div>`;
+        quizHtml+=`<button type="button" class="course-check-opt${sel?' picked':''}" data-q="${qi}" data-o="${oi}" onclick="pickLessonCheckOpt(${mi},${li},${qi},${oi},this)" ${sel||checked?'disabled':''} style="${sel?`border-color:${o.verdict==='optimal'?'var(--covenant)':o.verdict==='adequate'?'var(--gold)':'var(--warfare)'};color:${o.verdict==='optimal'?'var(--covenant)':o.verdict==='adequate'?'var(--gold)':'var(--warfare)'};`:''}">${String.fromCharCode(65+oi)}. ${sTxt(o.t)}${sel?` <span style="font-size:var(--fs-2);opacity:.85;">— ${o.verdict==='optimal'?'Optimal ✓':o.verdict==='adequate'?'Adequate ○':'Poor ✗'}</span>`:''}</button>`;
+        if(sel)quizHtml+=`<div style="font-size:var(--fs-3);color:var(--text-2);margin:-4px 0 8px 14px;line-height:1.5;">${sTxt(o.why)}</div>`;
       });
     });
     quizHtml+='</div>';
@@ -7417,14 +7417,14 @@ function renderLesson(idx,mi,li){
   // while silently missing its picture, key verse, application and check quiz.
   // Show the failure and a way out, exactly like the Study panel's Retry.
   const errHtml=l._error?`<div class="course-day-card" style="border-color:var(--warfare);margin-bottom:10px;">
-    <div style="font-size:13px;color:var(--warfare);">${sTxt(l._error)}</div>
-    <button type="button" onclick="retryLesson(${idx},${mi},${li})" style="margin-top:10px;font-size:12px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:8px 14px;background:transparent;">↻ Write the rest</button>
+    <div style="font-size:var(--fs-3);color:var(--warfare);">${sTxt(l._error)}</div>
+    <button type="button" onclick="retryLesson(${idx},${mi},${li})" style="margin-top:10px;font-size:var(--fs-3);color:var(--gold);border:1px solid var(--gold);border-radius:var(--r-sm);padding:8px 14px;background:transparent;">↻ Write the rest</button>
   </div>`:'';
   dv.innerHTML=`${errHtml}<button type="button" class="course-day-back" onclick="openModule(${mi})">← Module ${mi+1}</button>
-    <div style="padding:0 20px 16px;"><span class="course-day-num">LESSON ${li+1} OF ${m.lessons.length} · ${sTxt(m.title)}</span><div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-1);margin:2px 0 2px;">${sTxt(l.title)}</div><div style="font-size:13px;color:var(--gold);">${sTxt(l.ref)}</div>${l.focus?`<div style="font-size:13px;color:var(--text-2);margin-top:6px;">${sTxt(l.focus)}</div>`:''}</div>
+    <div style="padding:0 20px 16px;"><span class="course-day-num">LESSON ${li+1} OF ${m.lessons.length} · ${sTxt(m.title)}</span><div style="font-family:'Cinzel',serif;font-size:var(--fs-4);color:var(--text-1);margin:2px 0 2px;">${sTxt(l.title)}</div><div style="font-size:var(--fs-3);color:var(--gold);">${sTxt(l.ref)}</div>${l.focus?`<div style="font-size:var(--fs-3);color:var(--text-2);margin-top:6px;">${sTxt(l.focus)}</div>`:''}</div>
     <div class="course-day-card"><div class="course-day-teach">${sTxt(l.teaching)}</div>${l.analogy?`<div class="course-day-analogy"><strong>🧠 Picture it:</strong> ${sTxt(l.analogy)}</div>`:''}${l.keyVerse?`<div class="course-day-verse">"${sTxt(l.keyVerse)}"</div>`:''}${l.application?`<div class="course-day-app"><strong>Apply:</strong> ${sTxt(l.application)}</div>`:''}
     ${quizHtml}
-    ${quizLocked?'<div style="font-size:12px;color:var(--text-3);margin-top:10px;">Answer the check questions to complete this lesson.</div>':''}
+    ${quizLocked?'<div style="font-size:var(--fs-3);color:var(--text-3);margin-top:10px;">Answer the check questions to complete this lesson.</div>':''}
     <button type="button" class="course-day-done-btn" onclick="completeLesson(${mi},${li})" ${quizLocked?'disabled':''} style="${quizLocked?'opacity:.5;':''}">${checked?'✓ Lesson Complete':'Mark Lesson Complete & Continue'}</button>
     <button type="button" class="course-day-done-btn" style="background:var(--elev);color:var(--gold);border:1px solid var(--gold);margin-top:8px;" onclick="readLessonInBible(${mi},${li})">📖 Read in Bible</button>
     </div>`;
@@ -7485,7 +7485,7 @@ async function takeModuleQuiz(mi){
     return;
   }
   dv.innerHTML=`<button type="button" class="course-day-back" onclick="openModule(${mi})">← Module ${mi+1}</button>
-    <div style="padding:0 20px 16px;"><span class="course-day-num">MODULE QUIZ · ${sTxt(m.title)}</span><div style="padding:40px;text-align:center;"><div class="spinner" style="margin:0 auto 12px;"></div><div style="font-size:13px;color:var(--text-3);">Writing your module quiz…</div></div></div>`;
+    <div style="padding:0 20px 16px;"><span class="course-day-num">MODULE QUIZ · ${sTxt(m.title)}</span><div style="padding:40px;text-align:center;"><div class="spinner" style="margin:0 auto 12px;"></div><div style="font-size:var(--fs-3);color:var(--text-3);">Writing your module quiz…</div></div></div>`;
   try{
     const nq=COURSE_DEPTH_QUIZ[courseDepth]||5;
     const q=await callJSON([{role:'user',content:`Module quiz for "${sTxt(c.title)}" — Module ${mi+1}: ${sTxt(m.title)}. Lessons: ${m.lessons.map(l=>l.title).join('; ')}. Create a ${nq}-question multiple-choice quiz testing the module's core teaching.`}],
@@ -7531,7 +7531,7 @@ function scoreModuleQuiz(mi){
     addXP(20);
     store('cx_courses',S.courses);
     const allPassed=c.modules.every(x=>x.passed===true);
-    let h=`<div class="course-day-card" style="margin-top:12px;text-align:center;padding:24px;"><div style="font-size:22px;">🎉</div><div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin:6px 0;">MODULE ${mi+1} PASSED</div><div style="font-size:13px;color:var(--text-2);">${good}/${moduleQuizQ.length} correct · +20 XP</div></div>`;
+    let h=`<div class="course-day-card" style="margin-top:12px;text-align:center;padding:24px;"><div style="font-size:var(--fs-6);">🎉</div><div style="font-family:'Cinzel',serif;font-size:var(--fs-4);color:var(--gold);margin:6px 0;">MODULE ${mi+1} PASSED</div><div style="font-size:var(--fs-3);color:var(--text-2);">${good}/${moduleQuizQ.length} correct · +20 XP</div></div>`;
     if(allPassed){
       addXP(80);
       if(c.sample){
@@ -7541,7 +7541,7 @@ function scoreModuleQuiz(mi){
         toast('🏆 Sample course completed! +80 XP');
         return;
       }
-      h+=`<div class="course-day-card" style="margin-top:12px;text-align:center;padding:24px;"><div style="font-size:22px;">🏆</div><div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin:6px 0;">COURSE COMPLETE</div><div style="font-size:13px;color:var(--text-2);">All ${c.modules.length} modules passed · +80 XP</div></div>`;
+      h+=`<div class="course-day-card" style="margin-top:12px;text-align:center;padding:24px;"><div style="font-size:var(--fs-6);">🏆</div><div style="font-family:'Cinzel',serif;font-size:var(--fs-4);color:var(--gold);margin:6px 0;">COURSE COMPLETE</div><div style="font-size:var(--fs-3);color:var(--text-2);">All ${c.modules.length} modules passed · +80 XP</div></div>`;
       toast('🏆 Course complete! +80 XP');
     }else toast(`Module ${mi+1} passed! +20 XP`);
     const dv=document.getElementById('course-day-view');
@@ -7566,7 +7566,7 @@ function renderModuleQuiz(mi){
   const m=c.modules[mi];if(!m)return;
   const dv=document.getElementById('course-day-view');
   let h=`<button type="button" class="course-day-back" onclick="openModule(${mi})">← Module ${mi+1}</button>
-    <div style="padding:0 20px 16px;"><span class="course-day-num">MODULE QUIZ · ${sTxt(m.title)}</span><div style="font-size:12px;color:var(--text-2);margin-top:4px;">Answer honestly — pass ${Math.ceil(moduleQuizQ.length/2)} of ${moduleQuizQ.length} to unlock the next module.</div></div>`;
+    <div style="padding:0 20px 16px;"><span class="course-day-num">MODULE QUIZ · ${sTxt(m.title)}</span><div style="font-size:var(--fs-3);color:var(--text-2);margin-top:4px;">Answer honestly — pass ${Math.ceil(moduleQuizQ.length/2)} of ${moduleQuizQ.length} to unlock the next module.</div></div>`;
   moduleQuizQ.forEach((q,qi)=>{
     h+=`<div class="quiz-card"><div class="quiz-q">${qi+1}. ${sTxt(q.q)}</div><div class="quiz-opts">`+
       q.options.map((o,oi)=>`<button type="button" class="quiz-opt module-q-${qi}" data-mc="${qi}" data-oi="${oi}" onclick="pickModuleQuizOpt(${mi},${qi},${oi},this)">${String.fromCharCode(65+oi)}. ${sTxt(o&&typeof o==='object'?o.t:o)}</button>`).join('')+
@@ -7587,8 +7587,8 @@ function openCourseDay(dayIdx){
   if(!day.filled){
     // SKELETON: show the day shell + trigger lazy generation
     dv.innerHTML=`<button type="button" class="course-day-back" onclick="viewCourse(${idx})">← All days</button>
-    <div style="padding:0 20px 16px;"><span class="course-day-num">DAY ${day.day} OF ${c.days.length}</span><div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-1);margin:2px 0 2px;">${sTxt(day.title)}</div><div style="font-size:13px;color:var(--gold);">${sTxt(day.ref)}</div>${day.focus?`<div style="font-size:13px;color:var(--text-2);margin-top:6px;">${sTxt(day.focus)}</div>`:''}</div>
-    <div class="course-day-card"><div class="course-day-gen-status" style="font-size:13px;color:var(--text-3);padding:8px 0;">Opening your lesson…</div><div style="font-size:12px;color:var(--text-3);margin-top:8px;">Lesson content generates now and is saved for offline — this takes a few seconds.</div></div>`;
+    <div style="padding:0 20px 16px;"><span class="course-day-num">DAY ${day.day} OF ${c.days.length}</span><div style="font-family:'Cinzel',serif;font-size:var(--fs-4);color:var(--text-1);margin:2px 0 2px;">${sTxt(day.title)}</div><div style="font-size:var(--fs-3);color:var(--gold);">${sTxt(day.ref)}</div>${day.focus?`<div style="font-size:var(--fs-3);color:var(--text-2);margin-top:6px;">${sTxt(day.focus)}</div>`:''}</div>
+    <div class="course-day-card"><div class="course-day-gen-status" style="font-size:var(--fs-3);color:var(--text-3);padding:8px 0;">Opening your lesson…</div><div style="font-size:var(--fs-3);color:var(--text-3);margin-top:8px;">Lesson content generates now and is saved for offline — this takes a few seconds.</div></div>`;
     setTimeout(()=>fillCourseDay(idx,dayIdx),50);
     return;
   }
@@ -7601,23 +7601,23 @@ function openCourseDay(dayIdx){
   const checked=day.checked===true;
   let quizHtml='';
   if(day.quiz&&day.quiz.length){
-    quizHtml='<div class="course-day-card" style="margin-top:12px;"><div style="font-family:\'Cinzel\',serif;font-size:13px;letter-spacing:1px;color:var(--gold);margin-bottom:10px;">✍️ CHECK YOURSELF</div>';
+    quizHtml='<div class="course-day-card" style="margin-top:12px;"><div style="font-family:\'Cinzel\',serif;font-size:var(--fs-3);letter-spacing:1px;color:var(--gold);margin-bottom:10px;">✍️ CHECK YOURSELF</div>';
     day.quiz.forEach((q,qi)=>{
-      quizHtml+=`<div style="font-size:14px;color:var(--text-1);font-weight:600;margin:10px 0 6px;">${qi+1}. ${sTxt(q.q)}</div>`;
+      quizHtml+=`<div style="font-size:var(--fs-4);color:var(--text-1);font-weight:600;margin:10px 0 6px;">${qi+1}. ${sTxt(q.q)}</div>`;
       q.options.forEach((o,oi)=>{
         const sel=o.picked;
-        quizHtml+=`<button type="button" class="course-check-opt${sel?' picked':''}" data-q="${qi}" data-o="${oi}" onclick="pickCourseCheckOpt(${dayIdx},${qi},${oi},this)" ${sel||checked?'disabled':''} style="${sel?`border-color:${o.verdict==='optimal'?'var(--covenant)':o.verdict==='adequate'?'var(--gold)':'var(--warfare)'};color:${o.verdict==='optimal'?'var(--covenant)':o.verdict==='adequate'?'var(--gold)':'var(--warfare)'};`:''}">${String.fromCharCode(65+oi)}. ${sTxt(o.t)}${sel?` <span style="font-size:11px;opacity:.85;">— ${o.verdict==='optimal'?'Optimal ✓':o.verdict==='adequate'?'Adequate ○':'Poor ✗'}</span>`:''}</button>`;
-        if(sel)quizHtml+=`<div style="font-size:12px;color:var(--text-2);margin:-4px 0 8px 14px;line-height:1.5;">${sTxt(o.why)}</div>`;
+        quizHtml+=`<button type="button" class="course-check-opt${sel?' picked':''}" data-q="${qi}" data-o="${oi}" onclick="pickCourseCheckOpt(${dayIdx},${qi},${oi},this)" ${sel||checked?'disabled':''} style="${sel?`border-color:${o.verdict==='optimal'?'var(--covenant)':o.verdict==='adequate'?'var(--gold)':'var(--warfare)'};color:${o.verdict==='optimal'?'var(--covenant)':o.verdict==='adequate'?'var(--gold)':'var(--warfare)'};`:''}">${String.fromCharCode(65+oi)}. ${sTxt(o.t)}${sel?` <span style="font-size:var(--fs-2);opacity:.85;">— ${o.verdict==='optimal'?'Optimal ✓':o.verdict==='adequate'?'Adequate ○':'Poor ✗'}</span>`:''}</button>`;
+        if(sel)quizHtml+=`<div style="font-size:var(--fs-3);color:var(--text-2);margin:-4px 0 8px 14px;line-height:1.5;">${sTxt(o.why)}</div>`;
       });
     });
     quizHtml+='</div>';
   }
   const quizLocked=day.quiz&&day.quiz.length&&!checked;
   dv.innerHTML=`<button type="button" class="course-day-back" onclick="viewCourse(${idx})">← All days</button>
-    <div style="padding:0 20px 16px;"><span class="course-day-num">DAY ${day.day} OF ${c.days.length}</span><div style="font-family:'Cinzel',serif;font-size:16px;color:var(--text-1);margin:2px 0 2px;">${sTxt(day.title)}</div><div style="font-size:13px;color:var(--gold);">${sTxt(day.ref)}</div></div>
+    <div style="padding:0 20px 16px;"><span class="course-day-num">DAY ${day.day} OF ${c.days.length}</span><div style="font-family:'Cinzel',serif;font-size:var(--fs-4);color:var(--text-1);margin:2px 0 2px;">${sTxt(day.title)}</div><div style="font-size:var(--fs-3);color:var(--gold);">${sTxt(day.ref)}</div></div>
     <div class="course-day-card"><div class="course-day-teach">${sTxt(day.teaching)}</div>${day.analogy?`<div class="course-day-analogy"><strong>🧠 Picture it:</strong> ${sTxt(day.analogy)}</div>`:''}${day.keyVerse?`<div class="course-day-verse">"${sTxt(day.keyVerse)}"</div>`:''}${day.application?`<div class="course-day-app"><strong>Apply:</strong> ${sTxt(day.application)}</div>`:''}
     ${quizHtml}
-    ${quizLocked?'<div style="font-size:12px;color:var(--text-3);margin-top:10px;">Answer the check questions to complete this day.</div>':''}
+    ${quizLocked?'<div style="font-size:var(--fs-3);color:var(--text-3);margin-top:10px;">Answer the check questions to complete this day.</div>':''}
     <button type="button" class="course-day-done-btn" onclick="completeCourseDay(${dayIdx})" ${done||quizLocked?'disabled':''} style="${quizLocked?'opacity:.5;':''}">${done?(isLast?'Course Complete ✓':'✓ Day Complete'):nextLabel}</button>
     <button type="button" class="course-day-done-btn" style="background:var(--elev);color:var(--gold);border:1px solid var(--gold);margin-top:8px;" onclick="readCourseDayInBible(${dayIdx})">📖 Read in Bible</button>
     </div>`;
@@ -7910,11 +7910,11 @@ function exportSelectedPDF(){
   const w=window.open('','_blank');
   const fullHtml=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rhema Notes</title>
   <style>@page{margin:20mm 16mm;}body{font-family:Georgia,serif;color:#1a1510;line-height:1.7;max-width:680px;margin:0 auto;padding:24px;}
-  .brand{letter-spacing:4px;font-size:var(--fs-3);color:#8a6b20;text-transform:uppercase;margin-bottom:20px;}
-  h1{font-size:var(--fs-6);margin-bottom:20px;}
-  .label{letter-spacing:2px;font-size:var(--fs-1);color:#8a6b20;text-transform:uppercase;margin-bottom:4px;}
+  .brand{letter-spacing:4px;font-size:13px;color:#8a6b20;text-transform:uppercase;margin-bottom:20px;}
+  h1{font-size:21px;margin-bottom:20px;}
+  .label{letter-spacing:2px;font-size:10px;color:#8a6b20;text-transform:uppercase;margin-bottom:4px;}
   blockquote{font-style:italic;color:#444;margin:4px 0 12px;}
-  .content{font-size:var(--fs-4);white-space:pre-wrap;}
+  .content{font-size:15px;white-space:pre-wrap;}
   .entry{margin-bottom:16px;}
   </style></head><body><div class="brand">Rhema · Bible Study</div><h1>Selected Notes</h1>${body}</body></html>`;
   // APK path: native bridge generates a real PDF file and opens the share sheet
@@ -7941,15 +7941,15 @@ function exportSelectedPDF(){
       overlay.style.cssText='position:fixed;inset:0;background:var(--overlay);z-index:200;display:flex;flex-direction:column;padding:20px;';
       var header=document.createElement('div');
       header.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;';
-      header.innerHTML='<span style="color:var(--gold);font-family:Cinzel,serif;font-size:14px;letter-spacing:2px;">NOTES EXPORT</span>'
-        +'<button onclick="this.parentElement.parentElement.remove()" style="color:var(--text-1);font-size:22px;min-width:44px;min-height:44px;">×</button>';
+      header.innerHTML='<span style="color:var(--gold);font-family:Cinzel,serif;font-size:var(--fs-4);letter-spacing:2px;">NOTES EXPORT</span>'
+        +'<button onclick="this.parentElement.parentElement.remove()" style="color:var(--text-1);font-size:var(--fs-6);min-width:44px;min-height:44px;">×</button>';
       var pre=document.createElement('textarea');
       pre.readOnly=true;
       pre.value=fullHtml.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
-      pre.style.cssText='flex:1;background:var(--surface);color:var(--text-1);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:13px;resize:none;';
+      pre.style.cssText='flex:1;background:var(--surface);color:var(--text-1);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;font-size:var(--fs-3);resize:none;';
       var copyBtn=document.createElement('button');
       copyBtn.textContent='📋 Copy Text';
-      copyBtn.style.cssText='margin-top:10px;padding:14px;background:var(--gold);color:#0B0C15;border:none;border-radius:10px;font-weight:600;font-size:15px;';
+      copyBtn.style.cssText='margin-top:10px;padding:14px;background:var(--gold);color:#0B0C15;border:none;border-radius:var(--r-md);font-weight:600;font-size:var(--fs-4);';
       copyBtn.onclick=function(){
         pre.select();navigator.clipboard.writeText(pre.value).then(function(){toast('Copied!');},function(){toast('Copy failed');});
       };
@@ -8238,7 +8238,7 @@ async function sendChat(){
         var sb=document.createElement('button');
         sb.className='chat-save-btn';
         sb.textContent='✚ Save to Notes';
-        sb.style.cssText='font-size:11px;color:var(--gold);padding:4px 10px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:8px;cursor:pointer;min-height:36px;';
+        sb.style.cssText='font-size:var(--fs-2);color:var(--gold);padding:4px 10px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:var(--r-sm);cursor:pointer;min-height:36px;';
         sb.onclick=function(e){
           e.stopPropagation();
           var nk='_chat_'+Date.now();
@@ -8303,7 +8303,7 @@ function appendChatMsg(role, text){
     sw.style.cssText="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);";
     var sb=document.createElement("button");
     sb.textContent="✚ Save to Notes";
-    sb.style.cssText="font-size:11px;color:var(--gold);padding:4px 10px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:8px;cursor:pointer;min-height:36px;";
+    sb.style.cssText="font-size:var(--fs-2);color:var(--gold);padding:4px 10px;background:var(--gold-dim);border:1px solid var(--border-med);border-radius:var(--r-sm);cursor:pointer;min-height:36px;";
     sb.onclick=function(e){
       e.stopPropagation();
       var nk="_chat_"+Date.now();
@@ -9870,7 +9870,7 @@ async function openXrefPanel(returnFocus){
   const list = document.getElementById('xref-list');
   modal.classList.add('open');
   requestAnimationFrame(()=>modal.querySelector('button')?.focus());
-  src.innerHTML = `<div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:var(--covenant);margin-bottom:6px;">${sTxt(sourceRef)}</div><div style="font-family:'EB Garamond',serif;font-size:15px;color:var(--text-1);font-style:italic;">"${sTxt(srcVerse.substring(0,220))}"</div>`;
+  src.innerHTML = `<div style="font-family:'Cinzel',serif;font-size:var(--fs-2);letter-spacing:2px;color:var(--covenant);margin-bottom:6px;">${sTxt(sourceRef)}</div><div style="font-family:'EB Garamond',serif;font-size:var(--fs-4);color:var(--text-1);font-style:italic;">"${sTxt(srcVerse.substring(0,220))}"</div>`;
   list.innerHTML = '<div class="xref-loading"><div class="spinner" style="margin:0 auto 10px;"></div>Searching the Scriptures…</div>';
 
   try {
@@ -9883,7 +9883,7 @@ async function openXrefPanel(returnFocus){
     list.innerHTML = '<div class="xref-loading"><div class="spinner" style="margin:0 auto 10px;"></div>Loading verse texts…</div>';
     const loaded = await Promise.allSettled(refs.map(r=>verseTextFor(r.ref)));
     if(!isCurrentXref(myGen,modal))return;
-    let h = `<div style="font-size:11px;color:var(--text-3);padding:0 4px 10px;letter-spacing:.5px;">${refs.length} cross-references · Treasury of Scripture style</div>`;
+    let h = `<div style="font-size:var(--fs-2);color:var(--text-3);padding:0 4px 10px;letter-spacing:.5px;">${refs.length} cross-references · Treasury of Scripture style</div>`;
     refs.forEach((r,i)=>{
       const verseText = loaded[i].status==='fulfilled' ? loaded[i].value : '';
       h += `<button type="button" class="xref-card" data-ref="${sAttr(r.ref)}">
@@ -10661,7 +10661,7 @@ function renderPrayerJournal(){
     </div>
     <button class="course-submit-btn" onclick="savePrayer()">Save Prayer</button>
   </div>`;
-  if(!prayers.length){h+=`<div style="padding:20px;text-align:center;color:var(--text-3);font-size:14px;">No prayers yet. Tap "+ Add Prayer" to begin.</div>`;}
+  if(!prayers.length){h+=`<div style="padding:20px;text-align:center;color:var(--text-3);font-size:var(--fs-4);">No prayers yet. Tap "+ Add Prayer" to begin.</div>`;}
   else{
     prayers.forEach((p,i)=>{
       h+=`<div class="prayer-card" onclick="toggleAnswered(${i})">
@@ -10721,7 +10721,7 @@ function renderReadingGoal(){
   const el=document.getElementById('goal-slot');
   if(!el)return;
   const goal=load('cx_reading_goal',null);
-  if(!goal){el.innerHTML=`<div class="goal-card" onclick="openGoalSetup()"><div class="goal-title">READING GOAL</div><div style="text-align:center;padding:10px;color:var(--text-3);font-size:13px;">Tap to set a reading goal →</div></div>`;return;}
+  if(!goal){el.innerHTML=`<div class="goal-card" onclick="openGoalSetup()"><div class="goal-title">READING GOAL</div><div style="text-align:center;padding:10px;color:var(--text-3);font-size:var(--fs-3);">Tap to set a reading goal →</div></div>`;return;}
   const book=ALL_BOOKS[S.book];
   const total=book?book[2]:1;
   const progress=Math.min(100,Math.round((S.chapter||1)/total*100));
@@ -11067,7 +11067,7 @@ function renderSermonNotes(){
   const notes=load('cx_sermon_notes',[]);
   let h=`<div class="section-header"><span class="section-title">🎤 SERMON NOTES</span></div>`;
   h+=`<button class="prayer-add-btn" onclick="addSermonNote()">+ Add Note</button>`;
-  if(!notes.length){h+=`<div style="padding:20px;text-align:center;color:var(--text-3);font-size:14px;">No sermon notes yet.</div>`;}
+  if(!notes.length){h+=`<div style="padding:20px;text-align:center;color:var(--text-3);font-size:var(--fs-4);">No sermon notes yet.</div>`;}
   else{
     notes.forEach((n,i)=>{
       h+=`<div class="sermon-note-card">
@@ -11353,7 +11353,7 @@ function renderModelSelector(){
     const active=current===p.id;
     return `<button class="prayer-cat-btn${active?' active':''}" onclick="switchProvider('${p.id}')" style="margin-bottom:8px;width:100%;text-align:left;padding:12px;">
       <div style="font-weight:600;">${sTxt(p.name)}</div>
-      <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${sTxt(p.model)}${p.note?' \u00b7 '+sTxt(p.note):''}</div>
+      <div style="font-size:var(--fs-2);color:var(--text-3);margin-top:2px;">${sTxt(p.model)}${p.note?' \u00b7 '+sTxt(p.note):''}</div>
     </button>`;
   }).join('');
 }
